@@ -34,8 +34,8 @@ import (
 	"io"
 
 	"encoding/json"
-	"os"
-	"bufio"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 const (
@@ -46,11 +46,15 @@ const (
 	Verb_HEAD   string = "HEAD"
 )
 
-var req_log *bufio.Writer
-
+var req_log lumberjack.Logger
 func init() {
-	f, _ := os.Create("/var/log/es_reqs.log")
-	req_log = bufio.NewWriter(f)
+	req_log = lumberjack.Logger{
+		Filename: 	"/var/log/elastic_requests.log",
+		MaxSize:		100,
+		MaxBackups:	3,
+		MaxAge:			1,
+		Compress:	false,
+	}
 }
 
 // GetHost return the host from a url
@@ -156,8 +160,7 @@ type ReqLog struct {
 }
 func (req *Request) Log() {
 	reqJson, _ := json.Marshal(ReqLog{Timestamp: time.Now().UTC(), Url:req.Url, Method: req.Method, Body: string(req.Body)})
-	req_log.WriteString(string(reqJson) + "\n")
-	req_log.Flush()
+	req_log.Write([]byte(string(reqJson) + "\n"))
 }
 
 func NewRequest(method, url string) *Request {
