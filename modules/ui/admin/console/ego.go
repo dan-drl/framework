@@ -5,7 +5,7 @@ package console
 
 import (
 	"fmt"
-	"github.com/infinitbyte/framework/modules/ui/common"
+	"github.com/dan-drl/framework/modules/ui/common"
 	"io"
 	"net/http"
 )

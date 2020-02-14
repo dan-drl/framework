@@ -1,7 +1,7 @@
 package elastic
 
 import (
-	"github.com/infinitbyte/framework/core/util"
+	"github.com/dan-drl/framework/core/util"
 	"strings"
 )
 

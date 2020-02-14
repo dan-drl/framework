@@ -29,7 +29,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	log "github.com/cihub/seelog"
-	"github.com/infinitbyte/framework/core/errors"
+	"github.com/dan-drl/framework/core/errors"
 	"golang.org/x/net/proxy"
 	"io"
 

@@ -21,7 +21,7 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	log "github.com/cihub/seelog"
-	"github.com/infinitbyte/framework/core/util"
+	"github.com/dan-drl/framework/core/util"
 	"io/ioutil"
 	"net/http"
 	"os"

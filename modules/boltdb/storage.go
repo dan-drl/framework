@@ -17,10 +17,10 @@ limitations under the License.
 package boltdb
 
 import (
-	"github.com/infinitbyte/framework/core/config"
-	"github.com/infinitbyte/framework/core/global"
-	"github.com/infinitbyte/framework/core/kv"
-	"github.com/infinitbyte/framework/modules/boltdb/boltdb"
+	"github.com/dan-drl/framework/core/config"
+	"github.com/dan-drl/framework/core/global"
+	"github.com/dan-drl/framework/core/kv"
+	"github.com/dan-drl/framework/modules/boltdb/boltdb"
 	"os"
 	"path"
 )

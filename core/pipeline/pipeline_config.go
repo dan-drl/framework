@@ -17,8 +17,8 @@ limitations under the License.
 package pipeline
 
 import (
-	"github.com/infinitbyte/framework/core/env"
-	"github.com/infinitbyte/framework/core/errors"
+	"github.com/dan-drl/framework/core/env"
+	"github.com/dan-drl/framework/core/errors"
 	"time"
 )
 

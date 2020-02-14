@@ -20,8 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/cihub/seelog"
-	"github.com/infinitbyte/framework/core/cluster/raft"
-	"github.com/infinitbyte/framework/core/util"
+	"github.com/dan-drl/framework/core/cluster/raft"
+	"github.com/dan-drl/framework/core/util"
 	"io"
 	"sync"
 )

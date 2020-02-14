@@ -16,7 +16,7 @@ limitations under the License.
 
 package api
 
-import "github.com/infinitbyte/framework/core/config"
+import "github.com/dan-drl/framework/core/config"
 
 type APIConfig struct {
 	Enabled       bool                 `config:"enabled"`

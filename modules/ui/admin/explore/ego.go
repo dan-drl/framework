@@ -5,7 +5,7 @@ package explore
 
 import (
 	"fmt"
-	"github.com/infinitbyte/framework/core/ui/common"
+	"github.com/dan-drl/framework/core/ui/common"
 	"io"
 	"net/http"
 )

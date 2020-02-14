@@ -18,11 +18,11 @@ package pipeline
 
 import (
 	"encoding/json"
-	"github.com/infinitbyte/framework/core/errors"
-	"github.com/infinitbyte/framework/core/kv"
-	"github.com/infinitbyte/framework/core/orm"
-	"github.com/infinitbyte/framework/core/pipeline"
-	"github.com/infinitbyte/framework/core/util"
+	"github.com/dan-drl/framework/core/errors"
+	"github.com/dan-drl/framework/core/kv"
+	"github.com/dan-drl/framework/core/orm"
+	"github.com/dan-drl/framework/core/pipeline"
+	"github.com/dan-drl/framework/core/util"
 	"time"
 )
 

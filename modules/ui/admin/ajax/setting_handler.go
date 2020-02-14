@@ -19,9 +19,9 @@ package ajax
 import (
 	"encoding/json"
 	log "github.com/cihub/seelog"
-	api "github.com/infinitbyte/framework/core/api"
-	"github.com/infinitbyte/framework/core/config"
-	logging "github.com/infinitbyte/framework/core/logger"
+	api "github.com/dan-drl/framework/core/api"
+	"github.com/dan-drl/framework/core/config"
+	logging "github.com/dan-drl/framework/core/logger"
 	"net/http"
 )
 

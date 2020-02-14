@@ -17,11 +17,11 @@ limitations under the License.
 package persist_db
 
 import (
-	. "github.com/infinitbyte/framework/core/config"
-	"github.com/infinitbyte/framework/core/errors"
-	"github.com/infinitbyte/framework/core/orm"
-	"github.com/infinitbyte/framework/plugins/persist_db/mysql"
-	"github.com/infinitbyte/framework/plugins/persist_db/sqlite"
+	. "github.com/dan-drl/framework/core/config"
+	"github.com/dan-drl/framework/core/errors"
+	"github.com/dan-drl/framework/core/orm"
+	"github.com/dan-drl/framework/plugins/persist_db/mysql"
+	"github.com/dan-drl/framework/plugins/persist_db/sqlite"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )

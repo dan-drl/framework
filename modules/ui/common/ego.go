@@ -5,8 +5,8 @@ package common
 
 import (
 	"fmt"
-	"github.com/infinitbyte/framework/core/api"
-	"github.com/infinitbyte/framework/core/global"
+	"github.com/dan-drl/framework/core/api"
+	"github.com/dan-drl/framework/core/global"
 	"html"
 	"io"
 	"net/http"

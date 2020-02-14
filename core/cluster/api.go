@@ -17,12 +17,12 @@ limitations under the License.
 package cluster
 
 import (
-	"github.com/infinitbyte/framework/core/global"
-	"github.com/infinitbyte/framework/core/util"
+	"github.com/dan-drl/framework/core/global"
+	"github.com/dan-drl/framework/core/util"
 
 	"encoding/json"
 	log "github.com/cihub/seelog"
-	"github.com/infinitbyte/framework/core/api"
+	"github.com/dan-drl/framework/core/api"
 	"net/http"
 )
 

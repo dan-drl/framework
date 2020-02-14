@@ -1,11 +1,11 @@
 package admin
 
 import (
-	"github.com/infinitbyte/framework/core/api"
-	"github.com/infinitbyte/framework/core/api/router"
-	"github.com/infinitbyte/framework/modules/ui/admin/console"
-	"github.com/infinitbyte/framework/modules/ui/admin/dashboard"
-	"github.com/infinitbyte/framework/modules/ui/common"
+	"github.com/dan-drl/framework/core/api"
+	"github.com/dan-drl/framework/core/api/router"
+	"github.com/dan-drl/framework/modules/ui/admin/console"
+	"github.com/dan-drl/framework/modules/ui/admin/dashboard"
+	"github.com/dan-drl/framework/modules/ui/common"
 	"net/http"
 )
 

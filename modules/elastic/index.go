@@ -3,10 +3,10 @@ package elastic
 import (
 	"encoding/json"
 	log "github.com/cihub/seelog"
-	"github.com/infinitbyte/framework/core/elastic"
-	"github.com/infinitbyte/framework/core/errors"
-	"github.com/infinitbyte/framework/core/global"
-	"github.com/infinitbyte/framework/core/queue"
+	"github.com/dan-drl/framework/core/elastic"
+	"github.com/dan-drl/framework/core/errors"
+	"github.com/dan-drl/framework/core/global"
+	"github.com/dan-drl/framework/core/queue"
 	"runtime"
 )
 

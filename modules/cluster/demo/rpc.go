@@ -17,8 +17,8 @@ package demo
 
 //
 //import (
-//	"github.com/infinitbyte/framework/core/config"
-//	"github.com/infinitbyte/framework/core/rpc"
+//	"github.com/dan-drl/framework/core/config"
+//	"github.com/dan-drl/framework/core/rpc"
 //)
 //
 //func (module RPCModule) Name() string {

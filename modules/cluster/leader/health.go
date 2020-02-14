@@ -17,8 +17,8 @@ limitations under the License.
 package leader
 
 //import (
-//	"github.com/infinitbyte/framework/core/rpc"
-//	."github.com/infinitbyte/framework/core/cluster/pb"
+//	"github.com/dan-drl/framework/core/rpc"
+//	."github.com/dan-drl/framework/core/cluster/pb"
 //	"context"
 //	log "github.com/cihub/seelog"
 //)

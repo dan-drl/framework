@@ -1,10 +1,10 @@
 package elastic
 
 import (
-	"github.com/infinitbyte/framework/core/elastic"
-	"github.com/infinitbyte/framework/core/errors"
-	api "github.com/infinitbyte/framework/core/orm"
-	"github.com/infinitbyte/framework/core/util"
+	"github.com/dan-drl/framework/core/elastic"
+	"github.com/dan-drl/framework/core/errors"
+	api "github.com/dan-drl/framework/core/orm"
+	"github.com/dan-drl/framework/core/util"
 )
 
 type ElasticORM struct {
