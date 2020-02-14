@@ -18,7 +18,7 @@ package util
 
 import (
 	"fmt"
-	"github.com/magiconair/properties/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -80,6 +80,11 @@ func BenchmarkGet(b *testing.B) {
 		HttpGet("http://es-guide-preview.elasticsearch.cn")
 	}
 
+}
+
+func TestLogReqAsJson(b *testing.T) {
+	req := Request{ Method:"GET", Url: "www.wiki.com", Body: []byte("TEST") }
+	req.Log()
 }
 
 //func TestTimeWait(t *testing.T) {
