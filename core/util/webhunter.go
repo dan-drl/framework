@@ -32,6 +32,10 @@ import (
 	"github.com/infinitbyte/framework/core/errors"
 	"golang.org/x/net/proxy"
 	"io"
+
+	"encoding/json"
+	"os"
+	"bufio"
 )
 
 const (
@@ -41,6 +45,13 @@ const (
 	Verb_DELETE string = "DELETE"
 	Verb_HEAD   string = "HEAD"
 )
+
+var req_log *bufio.Writer
+
+func init() {
+	f, _ := os.Create("/var/log/es_reqs.log")
+	req_log = bufio.NewWriter(f)
+}
 
 // GetHost return the host from a url
 func GetHost(url string) string {
@@ -127,11 +138,25 @@ type Request struct {
 	Cookie      string
 	Proxy       string
 	Body        []byte
+	StrBody     string
 	headers     map[string]string
 	ContentType string
 
 	basicAuthUsername string
 	basicAuthPassword string
+}
+
+// Hack in log function for capturing requests going to elastic search.
+// These get logged to disk and filebeats sends them out.
+type ReqLog struct {
+	Url string
+	Method string
+	Body string
+}
+func (req *Request) Log() {
+	reqJson, _ := json.Marshal(ReqLog{Url:req.Url, Method: req.Method, Body: string(req.Body)})
+	req_log.WriteString(string(reqJson) + "\n")
+	req_log.Flush()
 }
 
 func NewRequest(method, url string) *Request {
@@ -239,7 +264,8 @@ const ContentTypeForm = "application/x-www-form-urlencoded;charset=UTF-8"
 // ExecuteRequest issue a request
 func ExecuteRequest(req *Request) (result *Result, err error) {
 
-	//log.Trace("let's: " + req.Method + ", " + req.Url)
+	// log.Trace("let's: " + req.Method + ", " + req.Url)
+	req.Log()
 
 	var request *http.Request
 	if req.Body != nil && len(req.Body) > 0 {
