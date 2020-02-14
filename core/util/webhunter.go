@@ -155,8 +155,7 @@ type ReqLog struct {
 }
 func (req *Request) Log() {
 	reqJson, _ := json.Marshal(ReqLog{Url:req.Url, Method: req.Method, Body: string(req.Body)})
-	fmt.Println(string(reqJson))
-	req_log.WriteString(string(reqJson))
+	req_log.WriteString(string(reqJson) + "\n")
 	req_log.Flush()
 }
 

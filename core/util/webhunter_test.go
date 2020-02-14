@@ -85,6 +85,7 @@ func BenchmarkGet(b *testing.B) {
 func TestLogReqAsJson(b *testing.T) {
 	req := Request{ Method:"GET", Url: "www.wiki.com", Body: []byte("TEST") }
 	req.Log()
+	req.Log()
 }
 
 //func TestTimeWait(t *testing.T) {
