@@ -149,12 +149,13 @@ type Request struct {
 // Hack in log function for capturing requests going to elastic search.
 // These get logged to disk and filebeats sends them out.
 type ReqLog struct {
+	Timestamp time.Time
 	Url string
 	Method string
 	Body string
 }
 func (req *Request) Log() {
-	reqJson, _ := json.Marshal(ReqLog{Url:req.Url, Method: req.Method, Body: string(req.Body)})
+	reqJson, _ := json.Marshal(ReqLog{Timestamp: time.Now().UTC(), Url:req.Url, Method: req.Method, Body: string(req.Body)})
 	req_log.WriteString(string(reqJson) + "\n")
 	req_log.Flush()
 }
