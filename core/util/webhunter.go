@@ -46,9 +46,9 @@ const (
 	Verb_HEAD   string = "HEAD"
 )
 
-var req_log lumberjack.Logger
+var es_log lumberjack.Logger
 func init() {
-	req_log = lumberjack.Logger{
+	es_log = lumberjack.Logger{
 		Filename: 	"/var/log/elastic_requests.log",
 		MaxSize:		100,
 		MaxBackups:	3,
@@ -56,6 +56,7 @@ func init() {
 		Compress:	false,
 	}
 }
+
 
 // GetHost return the host from a url
 func GetHost(url string) string {
@@ -160,7 +161,7 @@ type ReqLog struct {
 }
 func (req *Request) Log() {
 	reqJson, _ := json.Marshal(ReqLog{Timestamp: time.Now().UTC(), Url:req.Url, Method: req.Method, Body: string(req.Body)})
-	req_log.Write([]byte(string(reqJson) + "\n"))
+	es_log.Write([]byte(string(reqJson) + "\n"))
 }
 
 func NewRequest(method, url string) *Request {
@@ -257,6 +258,24 @@ type Result struct {
 	Body       []byte
 	StatusCode int
 	Size       uint64
+}
+
+// Hack in log function for capturing requests going to elastic search.
+// These get logged to disk and filebeats sends them out.
+type ResultLog struct {
+	Timestamp time.Time
+	Url string
+	StatusCode int
+	Body string
+}
+func (res *Result) Log() {
+	chop = len(res.Body)-1
+	if chop > 500 {
+		chop = 500
+	}
+	body := string(res.Body[:chop])
+	resJson, _ := json.Marshal(ResultLog{Timestamp: time.Now().UTC(), Url:res.Url, StatusCode: res.StatusCode, Body: body})
+	es_log.Write([]byte(string(resJson) + "\n"))
 }
 
 const userAgent = "Mozilla/5.0 (compatible; infinitbyte/1.0; +http://github.com/infinitbyte/framework)"
@@ -484,6 +503,11 @@ func execute(req *http.Request) (*Result, error) {
 
 		result.Body = body
 		result.Size = uint64(len(body))
+
+		if result.StatusCode != 200 {
+			result.Log()
+		}
+
 		return result, nil
 	}
 
