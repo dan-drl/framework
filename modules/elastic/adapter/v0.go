@@ -22,9 +22,9 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/cihub/seelog"
-	"github.com/infinitbyte/framework/core/elastic"
-	"github.com/infinitbyte/framework/core/global"
-	"github.com/infinitbyte/framework/core/util"
+	"github.com/dan-drl/framework/core/elastic"
+	"github.com/dan-drl/framework/core/global"
+	"github.com/dan-drl/framework/core/util"
 	"regexp"
 	"strings"
 )

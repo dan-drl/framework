@@ -18,8 +18,8 @@ package pipeline
 
 import (
 	log "github.com/cihub/seelog"
-	"github.com/infinitbyte/framework/core/errors"
-	"github.com/infinitbyte/framework/core/util"
+	"github.com/dan-drl/framework/core/errors"
+	"github.com/dan-drl/framework/core/util"
 )
 
 type ParaKey string

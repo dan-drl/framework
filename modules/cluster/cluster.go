@@ -1,13 +1,13 @@
 package cluster
 
 import (
-	"github.com/infinitbyte/framework/core/cluster"
-	pb "github.com/infinitbyte/framework/core/cluster/pb"
-	"github.com/infinitbyte/framework/core/config"
-	"github.com/infinitbyte/framework/core/global"
-	"github.com/infinitbyte/framework/core/rpc"
-	"github.com/infinitbyte/framework/modules/cluster/demo/server"
-	"github.com/infinitbyte/framework/modules/cluster/discovery"
+	"github.com/dan-drl/framework/core/cluster"
+	pb "github.com/dan-drl/framework/core/cluster/pb"
+	"github.com/dan-drl/framework/core/config"
+	"github.com/dan-drl/framework/core/global"
+	"github.com/dan-drl/framework/core/rpc"
+	"github.com/dan-drl/framework/modules/cluster/demo/server"
+	"github.com/dan-drl/framework/modules/cluster/discovery"
 )
 
 type ClusterModule struct {

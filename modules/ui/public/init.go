@@ -18,8 +18,8 @@ package public
 
 import (
 	"github.com/emirpasic/gods/sets/hashset"
-	"github.com/infinitbyte/framework/core/api"
-	"github.com/infinitbyte/framework/core/ui"
+	"github.com/dan-drl/framework/core/api"
+	"github.com/dan-drl/framework/core/ui"
 	"golang.org/x/oauth2"
 )
 

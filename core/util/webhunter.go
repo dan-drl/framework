@@ -29,13 +29,13 @@ import (
 	"crypto/tls"
 	"fmt"
 	log "github.com/cihub/seelog"
-	"github.com/infinitbyte/framework/core/errors"
+	"github.com/dan-drl/framework/core/errors"
 	"golang.org/x/net/proxy"
 	"io"
 
 	"encoding/json"
-	"os"
-	"bufio"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 const (
@@ -46,12 +46,17 @@ const (
 	Verb_HEAD   string = "HEAD"
 )
 
-var req_log *bufio.Writer
-
+var es_log lumberjack.Logger
 func init() {
-	f, _ := os.Create("/var/log/es_reqs.log")
-	req_log = bufio.NewWriter(f)
+	es_log = lumberjack.Logger{
+		Filename: 	"/var/log/elastic_requests.log",
+		MaxSize:		100,
+		MaxBackups:	3,
+		MaxAge:			1,
+		Compress:	false,
+	}
 }
+
 
 // GetHost return the host from a url
 func GetHost(url string) string {
@@ -149,14 +154,14 @@ type Request struct {
 // Hack in log function for capturing requests going to elastic search.
 // These get logged to disk and filebeats sends them out.
 type ReqLog struct {
+	Timestamp time.Time
 	Url string
 	Method string
 	Body string
 }
 func (req *Request) Log() {
-	reqJson, _ := json.Marshal(ReqLog{Url:req.Url, Method: req.Method, Body: string(req.Body)})
-	req_log.WriteString(string(reqJson) + "\n")
-	req_log.Flush()
+	reqJson, _ := json.Marshal(ReqLog{Timestamp: time.Now().UTC(), Url:req.Url, Method: req.Method, Body: string(req.Body)})
+	es_log.Write([]byte(string(reqJson) + "\n"))
 }
 
 func NewRequest(method, url string) *Request {
@@ -253,6 +258,24 @@ type Result struct {
 	Body       []byte
 	StatusCode int
 	Size       uint64
+}
+
+// Hack in log function for capturing requests going to elastic search.
+// These get logged to disk and filebeats sends them out.
+type ResultLog struct {
+	Timestamp time.Time
+	Url string
+	StatusCode int
+	Body string
+}
+func (res *Result) Log() {
+	chop = len(res.Body)-1
+	if chop > 500 {
+		chop = 500
+	}
+	body := string(res.Body[:chop])
+	resJson, _ := json.Marshal(ResultLog{Timestamp: time.Now().UTC(), Url:res.Url, StatusCode: res.StatusCode, Body: body})
+	es_log.Write([]byte(string(resJson) + "\n"))
 }
 
 const userAgent = "Mozilla/5.0 (compatible; infinitbyte/1.0; +http://github.com/infinitbyte/framework)"
@@ -480,6 +503,11 @@ func execute(req *http.Request) (*Result, error) {
 
 		result.Body = body
 		result.Size = uint64(len(body))
+
+		if result.StatusCode != 200 {
+			result.Log()
+		}
+
 		return result, nil
 	}
 

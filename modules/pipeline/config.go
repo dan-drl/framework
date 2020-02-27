@@ -16,7 +16,7 @@ limitations under the License.
 
 package pipeline
 
-import "github.com/infinitbyte/framework/core/pipeline"
+import "github.com/dan-drl/framework/core/pipeline"
 
 // PipeRunnerConfig defines module related configs
 type PipeRunnerConfig struct {

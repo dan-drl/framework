@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"errors"
-	"github.com/infinitbyte/framework/core/global"
+	"github.com/dan-drl/framework/core/global"
 )
 
 type ESAPIV6 struct {

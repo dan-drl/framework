@@ -17,16 +17,16 @@ limitations under the License.
 package modules
 
 import (
-	"github.com/infinitbyte/framework/core/module"
-	"github.com/infinitbyte/framework/modules/api"
-	"github.com/infinitbyte/framework/modules/boltdb"
-	"github.com/infinitbyte/framework/modules/cluster"
-	"github.com/infinitbyte/framework/modules/elastic"
-	"github.com/infinitbyte/framework/modules/filter"
-	"github.com/infinitbyte/framework/modules/pipeline"
-	"github.com/infinitbyte/framework/modules/queue"
-	"github.com/infinitbyte/framework/modules/stats"
-	"github.com/infinitbyte/framework/modules/ui"
+	"github.com/dan-drl/framework/core/module"
+	"github.com/dan-drl/framework/modules/api"
+	"github.com/dan-drl/framework/modules/boltdb"
+	"github.com/dan-drl/framework/modules/cluster"
+	"github.com/dan-drl/framework/modules/elastic"
+	"github.com/dan-drl/framework/modules/filter"
+	"github.com/dan-drl/framework/modules/pipeline"
+	"github.com/dan-drl/framework/modules/queue"
+	"github.com/dan-drl/framework/modules/stats"
+	"github.com/dan-drl/framework/modules/ui"
 )
 
 // RegisterSystemModule is where modules are registered

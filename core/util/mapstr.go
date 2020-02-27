@@ -7,7 +7,7 @@ package util
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/infinitbyte/framework/core/errors"
+	"github.com/dan-drl/framework/core/errors"
 	"strings"
 )
 

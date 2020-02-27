@@ -17,8 +17,8 @@ limitations under the License.
 package cluster
 
 import (
-	"github.com/infinitbyte/framework/core/config"
-	"github.com/infinitbyte/framework/core/util"
+	"github.com/dan-drl/framework/core/config"
+	"github.com/dan-drl/framework/core/util"
 	"log"
 	"net"
 )
