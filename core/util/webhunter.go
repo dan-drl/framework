@@ -48,13 +48,16 @@ const (
 )
 
 var lumberjack_log lumberjack.Logger
+var logWebRequests = os.Getenv("GOPA_LOG_WEB_REQUESTS") == "true"
 func init() {
-	lumberjack_log = lumberjack.Logger{
-		Filename: 	os.Getenv("LOG_FILE_PATH"),
-		MaxSize:		100,
-		MaxBackups:	3,
-		MaxAge:			1,
-		Compress:	false,
+	if  logWebRequests {
+		lumberjack_log = lumberjack.Logger{
+			Filename: 	os.Getenv("GOPA_LOG_FILE_PATH"),
+			MaxSize:		100,
+			MaxBackups:	3,
+			MaxAge:			1,
+			Compress:	false,
+		}
 	}
 }
 
@@ -176,6 +179,11 @@ type ReqLog struct {
 	Size int			`json:"bodySize,omitempty"`
 }
 func (r *Request) Log() string {
+
+	if !logWebRequests {
+		return ""
+	}
+
 	id := GetUUID()
 	json, _ := json.Marshal(ReqLog{ Id: id, Time: time.Now().UTC(), Type: "Request", Url:r.Url, Method: r.Method,  Body: string(r.Body), Size:len(r.Body) })
 	lumberjack_log.Write([]byte(string(json) + "\n"))
@@ -192,10 +200,12 @@ type ResultLog struct {
 	Body string 			`json:"body,omitempty"`
 	Size uint64 			`json:"bodySize,omitempty"`
 }
-
-
-
 func (r *Result) Log(requestId string) string {
+
+	if !logWebRequests {
+		return ""
+	}
+
 	id := GetUUID()
 	json, _ := json.Marshal(ResultLog{Id: id, RequestId: requestId, Time: time.Now().UTC(), Type: "Response", Url:r.Url, Body: string(r.Body), Status: r.StatusCode, Size:r.Size	})
 	lumberjack_log.Write([]byte(string(json) + "\n"))
