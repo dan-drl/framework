@@ -171,6 +171,7 @@ type Request struct {
 
 type ReqLog struct {
 	Id string				`json:"id,omitempty"`
+	Name string     `json:"name:omitempty"`
 	Time time.Time	`json:"time,omitempty"`
 	Type string			`json:"type,omitempty"`
 	Url string			`json:"url,omitempty"`
@@ -185,13 +186,14 @@ func (r *Request) Log() string {
 	}
 
 	id := GetUUID()
-	json, _ := json.Marshal(ReqLog{ Id: id, Time: time.Now().UTC(), Type: "Request", Url:r.Url, Method: r.Method,  Body: string(r.Body), Size:len(r.Body) })
+	json, _ := json.Marshal(ReqLog{ Id: id, Name: "crawler", Time: time.Now().UTC(), Type: "Request", Url:r.Url, Method: r.Method,  Body: string(r.Body), Size:len(r.Body) })
 	lumberjack_log.Write([]byte(string(json) + "\n"))
 	return id
 }
 
 type ResultLog struct {
 	Id string 				`json:"id,omitempty"`
+	Name string 			`json:"name,omitempty"`
 	RequestId string  `json:"req_id,omitempty"`
 	Time time.Time 		`json:"time,omitempty"`
 	Type string 			`json:"type,omitempty"`
@@ -207,7 +209,7 @@ func (r *Result) Log(requestId string) string {
 	}
 
 	id := GetUUID()
-	json, _ := json.Marshal(ResultLog{Id: id, RequestId: requestId, Time: time.Now().UTC(), Type: "Response", Url:r.Url, Body: string(r.Body), Status: r.StatusCode, Size:r.Size	})
+	json, _ := json.Marshal(ResultLog{Id: id, Name: "crawler", RequestId: requestId, Time: time.Now().UTC(), Type: "Response", Url:r.Url, Body: string(r.Body), Status: r.StatusCode, Size:r.Size	})
 	lumberjack_log.Write([]byte(string(json) + "\n"))
 	return id
 }
