@@ -82,10 +82,11 @@ func BenchmarkGet(b *testing.B) {
 
 }
 
-func TestLogReqAsJson(b *testing.T) {
+func TestLogRequestAndResponseAsJson(b *testing.T) {
 	req := Request{ Method:"GET", Url: "www.wiki.com", Body: []byte("TEST") }
-	req.Log()
-	req.Log()
+	id := req.Log()
+	res := Result{  Url: "www.wiki.com", Body: []byte("TEST"), StatusCode:200, Size: 4 }
+	res.Log(id)
 }
 
 //func TestTimeWait(t *testing.T) {

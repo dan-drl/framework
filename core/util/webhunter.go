@@ -23,15 +23,17 @@ import (
 	"net"
 	"net/http"
 	uri "net/url"
+	"os"
 	"strings"
 	"time"
 
 	"crypto/tls"
 	"fmt"
+	"io"
+
 	log "github.com/cihub/seelog"
 	"github.com/dan-drl/framework/core/errors"
 	"golang.org/x/net/proxy"
-	"io"
 
 	"encoding/json"
 
@@ -46,17 +48,20 @@ const (
 	Verb_HEAD   string = "HEAD"
 )
 
-var es_log lumberjack.Logger
+var lumberjack_log lumberjack.Logger
+var logWebRequests = os.Getenv("GOPA_LOG_WEB_REQUESTS") == "true"
+
 func init() {
-	es_log = lumberjack.Logger{
-		Filename: 	"/var/log/elastic_requests.log",
-		MaxSize:		100,
-		MaxBackups:	3,
-		MaxAge:			1,
-		Compress:	false,
+	if logWebRequests {
+		lumberjack_log = lumberjack.Logger{
+			Filename:   os.Getenv("GOPA_LOG_FILE_PATH"),
+			MaxSize:    100,
+			MaxBackups: 3,
+			MaxAge:     1,
+			Compress:   false,
+		}
 	}
 }
-
 
 // GetHost return the host from a url
 func GetHost(url string) string {
@@ -153,15 +158,64 @@ type Request struct {
 
 // Hack in log function for capturing requests going to elastic search.
 // These get logged to disk and filebeats sends them out.
+
+// func GetUUID() string {
+// 	b := make([]byte, 16)
+// 	_, err := rand.Read(b)
+// 	if err != nil {
+//     log.Fatal(err)
+// 	}
+// 	uuid := fmt.Sprintf("%x-%x-%x-%x-%x",
+//     b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+// 	}
+// 	return uuid
+// }
+
 type ReqLog struct {
-	Timestamp time.Time
-	Url string
-	Method string
-	Body string
+	Id     string    `json:"id,omitempty"`
+	Name   string    `json:"name:omitempty"`
+	Time   time.Time `json:"time,omitempty"`
+	Type   string    `json:"type,omitempty"`
+	Url    string    `json:"url,omitempty"`
+	Method string    `json:"method,omitempty"`
+	Body   string    `json:"body,omitempty"`
+	Size   int       `json:"bodySize,omitempty"`
 }
-func (req *Request) Log() {
-	reqJson, _ := json.Marshal(ReqLog{Timestamp: time.Now().UTC(), Url:req.Url, Method: req.Method, Body: string(req.Body)})
-	es_log.Write([]byte(string(reqJson) + "\n"))
+
+func (r *Request) Log() string {
+
+	if !logWebRequests {
+		return ""
+	}
+
+	id := GetUUID()
+	json, _ := json.Marshal(ReqLog{Id: id, Name: "crawler", Time: time.Now().UTC(), Type: "Request", Url: r.Url, Method: r.Method, Body: string(r.Body), Size: len(r.Body)})
+	lumberjack_log.Write([]byte(string(json) + "\n"))
+	return id
+}
+
+type ResultLog struct {
+	Id        string    `json:"id,omitempty"`
+	Name      string    `json:"name,omitempty"`
+	RequestId string    `json:"req_id,omitempty"`
+	Time      time.Time `json:"time,omitempty"`
+	Type      string    `json:"type,omitempty"`
+	Status    int       `json:"status,omitempty"`
+	Url       string    `json:"url,omitempty"`
+	Body      string    `json:"body,omitempty"`
+	Size      uint64    `json:"bodySize,omitempty"`
+}
+
+func (r *Result) Log(requestId string) string {
+
+	if !logWebRequests {
+		return ""
+	}
+
+	id := GetUUID()
+	json, _ := json.Marshal(ResultLog{Id: id, Name: "crawler", RequestId: requestId, Time: time.Now().UTC(), Type: "Response", Url: r.Url, Body: string(r.Body), Status: r.StatusCode, Size: r.Size})
+	lumberjack_log.Write([]byte(string(json) + "\n"))
+	return id
 }
 
 func NewRequest(method, url string) *Request {
@@ -263,18 +317,19 @@ type Result struct {
 // Hack in log function for capturing requests going to elastic search.
 // These get logged to disk and filebeats sends them out.
 type ResultLog struct {
-	Timestamp time.Time
-	Url string
+	Timestamp  time.Time
+	Url        string
 	StatusCode int
-	Body string
+	Body       string
 }
+
 func (res *Result) Log() {
-	chop = len(res.Body)-1
+	chop = len(res.Body) - 1
 	if chop > 500 {
 		chop = 500
 	}
 	body := string(res.Body[:chop])
-	resJson, _ := json.Marshal(ResultLog{Timestamp: time.Now().UTC(), Url:res.Url, StatusCode: res.StatusCode, Body: body})
+	resJson, _ := json.Marshal(ResultLog{Timestamp: time.Now().UTC(), Url: res.Url, StatusCode: res.StatusCode, Body: body})
 	es_log.Write([]byte(string(resJson) + "\n"))
 }
 
@@ -286,10 +341,6 @@ const ContentTypeForm = "application/x-www-form-urlencoded;charset=UTF-8"
 
 // ExecuteRequest issue a request
 func ExecuteRequest(req *Request) (result *Result, err error) {
-
-	// log.Trace("let's: " + req.Method + ", " + req.Url)
-	req.Log()
-
 	var request *http.Request
 	if req.Body != nil && len(req.Body) > 0 {
 		postBytesReader := bytes.NewReader(req.Body)
@@ -379,7 +430,7 @@ func ExecuteRequest(req *Request) (result *Result, err error) {
 		client.Transport = tbTransport
 	}
 
-	return execute(request)
+	return execute(request, req)
 }
 
 // HttpGetWithCookie issue http request with cookie
@@ -441,7 +492,11 @@ var client = &http.Client{
 	CheckRedirect: nil,
 }
 
-func execute(req *http.Request) (*Result, error) {
+func execute(req *http.Request, baseReq *Request) (*Result, error) {
+
+	// Log the request
+	requestId := baseReq.Log()
+
 	result := &Result{}
 	resp, err := client.Do(req)
 
@@ -504,9 +559,8 @@ func execute(req *http.Request) (*Result, error) {
 		result.Body = body
 		result.Size = uint64(len(body))
 
-		if result.StatusCode != 200 {
-			result.Log()
-		}
+		// Log the response
+		result.Log(requestId)
 
 		return result, nil
 	}
