@@ -23,16 +23,17 @@ import (
 	"net"
 	"net/http"
 	uri "net/url"
+	"os"
 	"strings"
 	"time"
-	"os"
 
 	"crypto/tls"
 	"fmt"
+	"io"
+
 	log "github.com/cihub/seelog"
 	"github.com/dan-drl/framework/core/errors"
 	"golang.org/x/net/proxy"
-	"io"
 
 	"encoding/json"
 
@@ -49,14 +50,15 @@ const (
 
 var lumberjack_log lumberjack.Logger
 var logWebRequests = os.Getenv("GOPA_LOG_WEB_REQUESTS") == "true"
+
 func init() {
-	if  logWebRequests {
+	if logWebRequests {
 		lumberjack_log = lumberjack.Logger{
-			Filename: 	os.Getenv("GOPA_LOG_FILE_PATH"),
-			MaxSize:		100,
-			MaxBackups:	3,
-			MaxAge:			1,
-			Compress:	false,
+			Filename:   os.Getenv("GOPA_LOG_FILE_PATH"),
+			MaxSize:    100,
+			MaxBackups: 3,
+			MaxAge:     1,
+			Compress:   false,
 		}
 	}
 }
@@ -170,15 +172,16 @@ type Request struct {
 // }
 
 type ReqLog struct {
-	Id string				`json:"id,omitempty"`
-	Name string     `json:"name:omitempty"`
-	Time time.Time	`json:"time,omitempty"`
-	Type string			`json:"type,omitempty"`
-	Url string			`json:"url,omitempty"`
-	Method string		`json:"method,omitempty"`
-	Body string			`json:"body,omitempty"`
-	Size int			`json:"bodySize,omitempty"`
+	Id     string    `json:"id,omitempty"`
+	Name   string    `json:"name:omitempty"`
+	Time   time.Time `json:"time,omitempty"`
+	Type   string    `json:"type,omitempty"`
+	Url    string    `json:"url,omitempty"`
+	Method string    `json:"method,omitempty"`
+	Body   string    `json:"body,omitempty"`
+	Size   int       `json:"bodySize,omitempty"`
 }
+
 func (r *Request) Log() string {
 
 	if !logWebRequests {
@@ -186,22 +189,23 @@ func (r *Request) Log() string {
 	}
 
 	id := GetUUID()
-	json, _ := json.Marshal(ReqLog{ Id: id, Name: "crawler", Time: time.Now().UTC(), Type: "Request", Url:r.Url, Method: r.Method,  Body: string(r.Body), Size:len(r.Body) })
+	json, _ := json.Marshal(ReqLog{Id: id, Name: "crawler", Time: time.Now().UTC(), Type: "Request", Url: r.Url, Method: r.Method, Body: string(r.Body), Size: len(r.Body)})
 	lumberjack_log.Write([]byte(string(json) + "\n"))
 	return id
 }
 
 type ResultLog struct {
-	Id string 				`json:"id,omitempty"`
-	Name string 			`json:"name,omitempty"`
-	RequestId string  `json:"req_id,omitempty"`
-	Time time.Time 		`json:"time,omitempty"`
-	Type string 			`json:"type,omitempty"`
-	Status int 				`json:"status,omitempty"`
-	Url string        `json:"url,omitempty"`
-	Body string 			`json:"body,omitempty"`
-	Size uint64 			`json:"bodySize,omitempty"`
+	Id        string    `json:"id,omitempty"`
+	Name      string    `json:"name,omitempty"`
+	RequestId string    `json:"req_id,omitempty"`
+	Time      time.Time `json:"time,omitempty"`
+	Type      string    `json:"type,omitempty"`
+	Status    int       `json:"status,omitempty"`
+	Url       string    `json:"url,omitempty"`
+	Body      string    `json:"body,omitempty"`
+	Size      uint64    `json:"bodySize,omitempty"`
 }
+
 func (r *Result) Log(requestId string) string {
 
 	if !logWebRequests {
@@ -209,7 +213,7 @@ func (r *Result) Log(requestId string) string {
 	}
 
 	id := GetUUID()
-	json, _ := json.Marshal(ResultLog{Id: id, Name: "crawler", RequestId: requestId, Time: time.Now().UTC(), Type: "Response", Url:r.Url, Body: string(r.Body), Status: r.StatusCode, Size:r.Size	})
+	json, _ := json.Marshal(ResultLog{Id: id, Name: "crawler", RequestId: requestId, Time: time.Now().UTC(), Type: "Response", Url: r.Url, Body: string(r.Body), Status: r.StatusCode, Size: r.Size})
 	lumberjack_log.Write([]byte(string(json) + "\n"))
 	return id
 }
@@ -308,6 +312,25 @@ type Result struct {
 	Body       []byte
 	StatusCode int
 	Size       uint64
+}
+
+// Hack in log function for capturing requests going to elastic search.
+// These get logged to disk and filebeats sends them out.
+type ResultLog struct {
+	Timestamp  time.Time
+	Url        string
+	StatusCode int
+	Body       string
+}
+
+func (res *Result) Log() {
+	chop = len(res.Body) - 1
+	if chop > 500 {
+		chop = 500
+	}
+	body := string(res.Body[:chop])
+	resJson, _ := json.Marshal(ResultLog{Timestamp: time.Now().UTC(), Url: res.Url, StatusCode: res.StatusCode, Body: body})
+	es_log.Write([]byte(string(resJson) + "\n"))
 }
 
 const userAgent = "Mozilla/5.0 (compatible; infinitbyte/1.0; +http://github.com/infinitbyte/framework)"
@@ -535,7 +558,6 @@ func execute(req *http.Request, baseReq *Request) (*Result, error) {
 
 		result.Body = body
 		result.Size = uint64(len(body))
-
 
 		// Log the response
 		result.Log(requestId)
