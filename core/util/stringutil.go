@@ -26,6 +26,7 @@ import (
 	"errors"
 	"io"
 	"net/url"
+	"regexp"
 	"runtime"
 	"strconv"
 	. "strings"
@@ -53,6 +54,11 @@ func PrefixStr(s, substr string) bool {
 
 func SuffixStr(s, substr string) bool {
 	return HasSuffix(s, substr)
+}
+
+func RegexStr(s, regex string) bool {
+	re := regexp.MustCompile(regex)
+	return re.MatchString(s)
 }
 
 func StringToUTF16(s string) []uint16 {
