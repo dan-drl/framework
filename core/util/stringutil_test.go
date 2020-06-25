@@ -17,8 +17,9 @@ limitations under the License.
 package util
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMergeSpacke(t *testing.T) {
@@ -67,4 +68,10 @@ func TestTrimLeft(t *testing.T) {
 	str = "/static/static://off"
 	new = TrimLeftStr(str, "/static")
 	assert.Equal(t, "/static://off", new)
+}
+
+func TestRegexStr(t *testing.T) {
+	str := "https://www.google.com"
+	new := RegexStr(str, "^https")
+	assert.Equal(t, true, new)
 }

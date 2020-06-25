@@ -21,6 +21,7 @@ type Rule struct {
 	Contain []string `config:"contain"`
 	Prefix  []string `config:"prefix"`
 	Suffix  []string `config:"suffix"`
+	Regex   []string `config:"regex"`
 }
 
 // Rules defines two fields,
