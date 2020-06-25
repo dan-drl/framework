@@ -324,13 +324,13 @@ type ResultLog struct {
 }
 
 func (res *Result) Log() {
-	chop = len(res.Body) - 1
+	chop := len(res.Body) - 1
 	if chop > 500 {
 		chop = 500
 	}
 	body := string(res.Body[:chop])
 	resJson, _ := json.Marshal(ResultLog{Timestamp: time.Now().UTC(), Url: res.Url, StatusCode: res.StatusCode, Body: body})
-	es_log.Write([]byte(string(resJson) + "\n"))
+	lumberjack_log.Write([]byte(string(json) + "\n"))
 }
 
 const userAgent = "Mozilla/5.0 (compatible; infinitbyte/1.0; +http://github.com/infinitbyte/framework)"
