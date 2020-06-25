@@ -314,25 +314,6 @@ type Result struct {
 	Size       uint64
 }
 
-// Hack in log function for capturing requests going to elastic search.
-// These get logged to disk and filebeats sends them out.
-type ResultLog struct {
-	Timestamp  time.Time
-	Url        string
-	StatusCode int
-	Body       string
-}
-
-func (res *Result) Log() {
-	chop := len(res.Body) - 1
-	if chop > 500 {
-		chop = 500
-	}
-	body := string(res.Body[:chop])
-	resJson, _ := json.Marshal(ResultLog{Timestamp: time.Now().UTC(), Url: res.Url, StatusCode: res.StatusCode, Body: body})
-	lumberjack_log.Write([]byte(string(json) + "\n"))
-}
-
 const userAgent = "Mozilla/5.0 (compatible; infinitbyte/1.0; +http://github.com/infinitbyte/framework)"
 
 const ContentTypeJson = "application/json;charset=utf-8"
