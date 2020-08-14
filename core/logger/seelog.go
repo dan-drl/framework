@@ -17,7 +17,6 @@ limitations under the License.
 package logger
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -33,15 +32,6 @@ var file string
 var loggingConfig *config.LoggingConfig
 var l sync.Mutex
 var e *env.Env
-
-type LogMessage struct {
-	Timestamp string `json:timestamp`
-	Level     string `json:level`
-	Filename  string `json:filename`
-	Line      int    `json:line`
-	Function  string `json:function`
-	Message   string `json:msg`
-}
 
 // SetLogging init set logging
 func SetLogging(env *env.Env, logLevel string, logFile string) {
@@ -97,7 +87,7 @@ func SetLogging(env *env.Env, logLevel string, logFile string) {
 
 	consoleWriter, _ := NewConsoleWriter()
 
-	format := `{ "timestamp":"%Date(01-02) %Time", "level":"%LEV", "file":"%File" "line": %Line, "msg":"%Msg" }` + "\n"
+	format := "[%Date(01-02) %Time] [%LEV] [%File:%Line] %Msg%n"
 	formatter, err := log.NewFormatter(format)
 	if err != nil {
 		fmt.Println(err)
@@ -189,31 +179,14 @@ func (ar *CustomReceiver) ReceiveMessage(message string, level log.LogLevel, con
 	spl := strings.Split(f, ".")
 	funcName := spl[len(spl)-1]
 
-	lm := LogMessage{
-		Timestamp: context.CallTime().Format("15:04:05"),
-		Level:     strings.ToUpper(level.String()),
-		Filename:  context.FileName(),
-		Line:      context.Line(),
-		Function:  funcName,
-		Message:   message,
-	}
-
-	bPreparedMessage, err := json.Marshal(lm)
-	if err != nil {
-		fmt.Println(("Failed to marshal log message"))
-		return nil
-	}
-
-	preparedMessage := string(bPreparedMessage)
-
-	// preparedMessage := fmt.Sprintf("[%s] [%s] [%s:%d] [%s] %s\n",
-	// 	context.CallTime().Format("15:04:05"),
-	// 	strings.ToUpper(level.String()),
-	// 	context.FileName(),
-	// 	context.Line(),
-	// 	funcName,
-	// 	message,
-	// )
+	preparedMessage := fmt.Sprintf("[%s] [%s] [%s:%d] [%s] %s\n",
+		context.CallTime().Format("15:04:05"),
+		strings.ToUpper(level.String()),
+		context.FileName(),
+		context.Line(),
+		funcName,
+		message,
+	)
 
 	//console output
 	if level >= ar.minLogLevel {
