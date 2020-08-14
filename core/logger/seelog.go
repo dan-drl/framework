@@ -166,6 +166,15 @@ type CustomReceiver struct {
 	pushminLogLevel log.LogLevel
 }
 
+type LogMessage {
+	Timestamp		string `json:timestamp`
+	Level				string `json:level`
+	Filename		string `json:filename`
+	Line				string `json:line`
+	Function    string `json:function`
+	Message     string `json:msg`
+}
+
 // ReceiveMessage impl how to receive log message
 func (ar *CustomReceiver) ReceiveMessage(message string, level log.LogLevel, context log.LogContextInterface) error {
 
@@ -178,14 +187,25 @@ func (ar *CustomReceiver) ReceiveMessage(message string, level log.LogLevel, con
 	spl := strings.Split(f, ".")
 	funcName := spl[len(spl)-1]
 
-	preparedMessage := fmt.Sprintf("[%s] [%s] [%s:%d] [%s] %s\n",
-		context.CallTime().Format("15:04:05"),
-		strings.ToUpper(level.String()),
-		context.FileName(),
-		context.Line(),
-		funcName,
-		message,
-	)
+	lm := LogMessage{
+		Timestamp: context.CallTime().Format("15:04:05"),
+		Level: strings.ToUpper(level.String()),
+		Filename: context.FileName(),
+		Line: context.Line(),
+		Function: funcName,
+		Message: message,
+	}
+
+	preparedMessage := json.Marshal(lm)
+
+	// preparedMessage := fmt.Sprintf("[%s] [%s] [%s:%d] [%s] %s\n",
+	// 	context.CallTime().Format("15:04:05"),
+	// 	strings.ToUpper(level.String()),
+	// 	context.FileName(),
+	// 	context.Line(),
+	// 	funcName,
+	// 	message,
+	// )
 
 	//console output
 	if level >= ar.minLogLevel {
