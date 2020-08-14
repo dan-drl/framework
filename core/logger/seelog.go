@@ -198,10 +198,13 @@ func (ar *CustomReceiver) ReceiveMessage(message string, level log.LogLevel, con
 		Message:   message,
 	}
 
-	preparedMessage, err := json.Marshal(lm)
+	bPreparedMessage, err := json.Marshal(lm)
 	if err != nil {
 		fmt.Println(("Failed to marshal log message"))
+		return nil
 	}
+
+	preparedMessage := string(bPreparedMessage)
 
 	// preparedMessage := fmt.Sprintf("[%s] [%s] [%s:%d] [%s] %s\n",
 	// 	context.CallTime().Format("15:04:05"),
