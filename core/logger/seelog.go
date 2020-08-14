@@ -201,6 +201,7 @@ func (ar *CustomReceiver) ReceiveMessage(message string, level log.LogLevel, con
 	preparedMessage, err := json.Marshal(lm)
 	if err != nil {
 		fmt.Println(("Failed to marshal log message"))
+		return nil
 	}
 
 	// preparedMessage := fmt.Sprintf("[%s] [%s] [%s:%d] [%s] %s\n",
