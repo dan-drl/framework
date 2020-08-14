@@ -17,14 +17,16 @@ limitations under the License.
 package logger
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
+	"sync"
+
 	log "github.com/cihub/seelog"
 	"github.com/dan-drl/framework/core/config"
 	"github.com/dan-drl/framework/core/env"
 	"github.com/dan-drl/framework/core/util"
 	"github.com/ryanuber/go-glob"
-	"strings"
-	"sync"
 )
 
 var file string
@@ -166,13 +168,13 @@ type CustomReceiver struct {
 	pushminLogLevel log.LogLevel
 }
 
-type LogMessage {
-	Timestamp		string `json:timestamp`
-	Level				string `json:level`
-	Filename		string `json:filename`
-	Line				string `json:line`
-	Function    string `json:function`
-	Message     string `json:msg`
+type LogMessage struct {
+	Timestamp string `json:timestamp`
+	Level     string `json:level`
+	Filename  string `json:filename`
+	Line      string `json:line`
+	Function  string `json:function`
+	Message   string `json:msg`
 }
 
 // ReceiveMessage impl how to receive log message
@@ -189,11 +191,11 @@ func (ar *CustomReceiver) ReceiveMessage(message string, level log.LogLevel, con
 
 	lm := LogMessage{
 		Timestamp: context.CallTime().Format("15:04:05"),
-		Level: strings.ToUpper(level.String()),
-		Filename: context.FileName(),
-		Line: context.Line(),
-		Function: funcName,
-		Message: message,
+		Level:     strings.ToUpper(level.String()),
+		Filename:  context.FileName(),
+		Line:      context.Line(),
+		Function:  funcName,
+		Message:   message,
 	}
 
 	preparedMessage := json.Marshal(lm)
