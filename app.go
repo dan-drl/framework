@@ -90,7 +90,7 @@ func (app *App) Init(customFunc func()) {
 	flag.StringVar(&app.memproFile, "memprofile", "", "write memory profile to this file")
 	flag.StringVar(&app.httpprof, "pprof", "", "enable and setup pprof/expvar service, eg: localhost:6060 , the endpoint will be: http://localhost:6060/debug/pprof/ and http://localhost:6060/debug/vars")
 
-	flag.StringVar(&app.logDir, "log_path", "log", "the log path")
+	flag.StringVar(&app.logDir, "log_path", "/var/log/gopa/log.json", "the log path")
 
 	flag.Parse()
 
