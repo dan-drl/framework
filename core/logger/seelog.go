@@ -172,7 +172,7 @@ type LogMessage struct {
 	Timestamp string `json:timestamp`
 	Level     string `json:level`
 	Filename  string `json:filename`
-	Line      string `json:line`
+	Line      int    `json:line`
 	Function  string `json:function`
 	Message   string `json:msg`
 }
