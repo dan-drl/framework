@@ -93,7 +93,7 @@ func SetLogging(env *env.Env, logLevel string, logFile string) {
 		fmt.Println(err)
 	}
 
-	rollingFileWriter, _ := NewRollingFileWriterSize(file, rollingArchiveNone, "", 10000000000, 5, rollingNameModePostfix)
+	rollingFileWriter, _ := NewRollingFileWriterSize(file, rollingArchiveNone, "", 250000000, 5, rollingNameModePostfix)
 	bufferedWriter, _ := NewBufferedWriter(rollingFileWriter, 10000, 1000)
 
 	l, _ := log.LogLevelFromString(strings.ToLower(loggingConfig.LogLevel))
