@@ -21,6 +21,14 @@ import (
 	_ "expvar"
 	"flag"
 	"fmt"
+	defaultLog "log"
+	"net/http"
+	"os"
+	"os/signal"
+	"runtime"
+	"runtime/pprof"
+	"syscall"
+
 	log "github.com/cihub/seelog"
 	"github.com/dan-drl/framework/core/daemon"
 	"github.com/dan-drl/framework/core/env"
@@ -29,13 +37,6 @@ import (
 	"github.com/dan-drl/framework/core/module"
 	"github.com/dan-drl/framework/core/stats"
 	"github.com/dan-drl/framework/core/util"
-	defaultLog "log"
-	"net/http"
-	"os"
-	"os/signal"
-	"runtime"
-	"runtime/pprof"
-	"syscall"
 )
 
 type App struct {
@@ -90,7 +91,7 @@ func (app *App) Init(customFunc func()) {
 	flag.StringVar(&app.memproFile, "memprofile", "", "write memory profile to this file")
 	flag.StringVar(&app.httpprof, "pprof", "", "enable and setup pprof/expvar service, eg: localhost:6060 , the endpoint will be: http://localhost:6060/debug/pprof/ and http://localhost:6060/debug/vars")
 
-	flag.StringVar(&app.logDir, "log_path", "/var/log/gopa/log.json", "the log path")
+	flag.StringVar(&app.logDir, "log_path", "/var/log/gopa/app.log", "the log path")
 
 	flag.Parse()
 
