@@ -54,7 +54,7 @@ var logWebRequests = os.Getenv("GOPA_LOG_WEB_REQUESTS") == "true"
 func init() {
 	if logWebRequests {
 		lumberjack_log = lumberjack.Logger{
-			Filename:   os.Getenv("GOPA_LOG_FILE_PATH"),
+			Filename:   "/var/log/gopa/webrequests.log",
 			MaxSize:    100,
 			MaxBackups: 3,
 			MaxAge:     1,
