@@ -74,6 +74,21 @@ func TestGetHost(t *testing.T) {
 	assert.Equal(t, host, "logo.com")
 }
 
+func TestBadRequest(t *testing.T) {
+
+	recovered := false
+
+	defer func() {
+		if r := recover(); r != nil {
+			recovered = true
+		}
+	}()
+
+	HttpGet("http://sdafsdaffdsfasd")
+
+	assert.Equal(t, true, recovered)
+}
+
 func BenchmarkGet(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {

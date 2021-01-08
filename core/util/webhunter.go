@@ -414,7 +414,7 @@ func ExecuteRequest(req *Request) (result *Result, err error) {
 		client.Transport = tbTransport
 	}
 
-	return executeWithBackoff(&(Backoff{ EXP, time.Second, 0, 10}), request, req)
+	return executeWithBackoff(&(Backoff{ EXP, time.Second, 0, 5}), request, req)
 
 }
 
@@ -494,6 +494,34 @@ type Backoff struct {
 
 func executeWithBackoff(backoff *Backoff, req *http.Request, baseReq *Request) (res *Result, err error) {
 
+	// Attempt to execute the request
+	res, err = executeWrapper(backoff, req, baseReq)
+
+	// If there was an error, and still under max tries limit make a recursive call to try request again. 
+	if err != nil && backoff.curTry < backoff.maxTry {
+		log.Debugf("Recovery attempt %d of %d. Encountered error.", backoff.curTry, backoff.maxTry)
+		log.Error("Recovering from: ", err)
+
+		// Sleep for specified interval
+		if backoff.Type == LINEAR {
+			log.Debugf("Sleeping for %s", backoff.Interval)
+			time.Sleep(backoff.Interval)
+		} else if backoff.Type == EXP {
+			exp := math.Pow(2, float64(backoff.curTry))
+			dur := backoff.Interval * time.Duration(exp)
+			log.Debugf("Sleeping for %s", dur)
+			time.Sleep(dur)
+		}
+
+		// Try again
+		backoff.curTry = backoff.curTry + 1
+		res, err = executeWithBackoff(backoff, req, baseReq)
+	}
+
+	return res, err
+}
+
+func executeWrapper(backoff *Backoff, req *http.Request, baseReq *Request) (result *Result, err error) {
 	defer func() {
 
 		// As long as try is less than max allowed tries, take error from panic, and try again. 
@@ -508,37 +536,13 @@ func executeWithBackoff(backoff *Backoff, req *http.Request, baseReq *Request) (
 				if !ok {
 					err = fmt.Errorf("pkg: %v", r)
 				}
+
+				log.Debugf("Set error")
 			}
 		}
 	}()
 
-	// Attempt to execute the request
-	res, err = execute(req, baseReq)
-
-	// If there was an error, and still under max tries limit make a recursive call to try request again. 
-	if err != nil && backoff.curTry < backoff.maxTry {
-		log.Debugf("Recover attempt %i of %i. Encountered error.", backoff.curTry, backoff.maxTry)
-		log.Error("Recovering from", err)
-		
-
-		// Sleep for specified interval
-		if backoff.Type == LINEAR {
-			log.Debugf("Sleeping for %i", backoff.Interval)
-			time.Sleep(backoff.Interval)
-		} else if backoff.Type == EXP {
-			exp := math.Pow(2, float64(backoff.curTry))
-			dur := backoff.Interval * time.Duration(exp)
-
-			log.Debugf("Sleeping for %i", dur)
-			time.Sleep(dur)
-		}
-
-		// Try again
-		backoff.curTry = backoff.curTry + 1
-		res, err = executeWithBackoff(backoff, req, baseReq)
-	}
-
-	return res, err
+	return execute(req, baseReq)
 }
 
 func execute(req *http.Request, baseReq *Request) (*Result, error) {
