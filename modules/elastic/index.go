@@ -2,12 +2,11 @@ package elastic
 
 import (
 	"encoding/json"
+
 	log "github.com/cihub/seelog"
 	"github.com/dan-drl/framework/core/elastic"
 	"github.com/dan-drl/framework/core/errors"
-	"github.com/dan-drl/framework/core/global"
 	"github.com/dan-drl/framework/core/queue"
-	"runtime"
 )
 
 type ElasticIndexer struct {

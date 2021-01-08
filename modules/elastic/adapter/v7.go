@@ -21,11 +21,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
+
 	log "github.com/cihub/seelog"
 	"github.com/dan-drl/framework/core/elastic"
 	"github.com/dan-drl/framework/core/global"
 	"github.com/dan-drl/framework/core/util"
-	"strings"
 )
 
 type ESAPIV7 struct {
@@ -66,7 +67,7 @@ func (c *ESAPIV7) initTemplate(indexPrefix string) {
 	if global.Env().IsDebug {
 		log.Trace("init elasticsearch template")
 	}
-	templateName := "infinitbyte"
+	templateName := "drl"
 
 	if c.Config.TemplateName != "" {
 		templateName = c.Config.TemplateName

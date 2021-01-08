@@ -18,10 +18,12 @@ package adapter
 
 import (
 	"fmt"
-	log "github.com/cihub/seelog"
 	"strings"
 
+	log "github.com/cihub/seelog"
+
 	"errors"
+
 	"github.com/dan-drl/framework/core/global"
 )
 
@@ -65,7 +67,7 @@ func (c *ESAPIV6) initTemplate(indexPrefix string) {
 	if global.Env().IsDebug {
 		log.Trace("init elasticsearch template")
 	}
-	templateName := "infinitbyte"
+	templateName := "drl"
 
 	if c.Config.TemplateName != "" {
 		templateName = c.Config.TemplateName

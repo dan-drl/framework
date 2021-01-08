@@ -9,9 +9,10 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"errors"
-	log "github.com/cihub/seelog"
 	"math/big"
 	"time"
+
+	log "github.com/cihub/seelog"
 )
 
 func GetRootCert() (rootCert *x509.Certificate, rootKey *rsa.PrivateKey, rootCertPEM []byte) {
@@ -98,7 +99,7 @@ func GetCertTemplate() (*x509.Certificate, error) {
 
 	tmpl := x509.Certificate{
 		SerialNumber:          serialNumber,
-		Subject:               pkix.Name{Organization: []string{"INFINITBYTE.COM"}},
+		Subject:               pkix.Name{Organization: []string{"DRL.COM"}},
 		SignatureAlgorithm:    x509.SHA256WithRSA,
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(1, 0, 0), // valid for an year

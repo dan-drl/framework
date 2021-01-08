@@ -44,7 +44,7 @@ build: config
 
 init:
 	@echo building FRAMEWORK $(FRAMEWORK_VERSION)
-	@if [ ! -d $(FRAMEWORK_VENDOR_FOLDER) ]; then echo "framework vendor does not exist";(git clone  -b $(FRAMEWORK_VENDOR_BRANCH) https://github.com/infinitbyte/framework-vendor.git vendor) fi
+	@if [ ! -d $(FRAMEWORK_VENDOR_FOLDER) ]; then echo "framework vendor does not exist";(git clone  -b $(FRAMEWORK_VENDOR_BRANCH) https://github.com/dan-drl/framework-vendor.git vendor) fi
 	@if [ "" == $(FRAMEWORK_OFFLINE_BUILD) ]; then (cd vendor && git pull origin $(FRAMEWORK_VENDOR_BRANCH)); fi;
 
 
@@ -58,7 +58,7 @@ update-ui:
 
 update-template-ui:
 	@echo "generate UI pages"
-	@$(GO) get github.com/infinitbyte/ego/cmd/ego
+	@$(GO) get github.com/dan-drl/ego/cmd/ego
 	@cd core/ && ego
 	@cd modules/ && ego
 	@cd plugins/ && ego
@@ -141,8 +141,8 @@ cyclo:
 	gocyclo -top 10 -over 12 $$(ls -d */ | grep -v vendor)
 
 benchmarks:
-	go test github.com/infinitbyte/gopa/core/util -benchtime=1s -bench ^Benchmark -run ^$
-	go test github.com/infinitbyte/gopa//modules/crawler/pipe -benchtime=1s -bench  ^Benchmark -run ^$
+	go test github.com/dan-drl/gopa/core/util -benchtime=1s -bench ^Benchmark -run ^$
+	go test github.com/dan-drl/gopa//modules/crawler/pipe -benchtime=1s -bench  ^Benchmark -run ^$
 
 update_proto:
 	(cd core/cluster/pb && protoc --go_out=plugins=grpc:. *.proto)
