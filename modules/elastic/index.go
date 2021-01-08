@@ -25,24 +25,29 @@ func (this *ElasticIndexer) Start() error {
 	go func() {
 		defer func() {
 
-			if !global.Env().IsDebug {
-				if r := recover(); r != nil {
+			// If the indexer goes down, there's no point in running the crawler. Always
+			// panic under this condition. Do not attempt to recover from a panic. The
+			// indexing operation now supports a smart backoff anyways, that will retry
+			// several times before ultimately giving up.
 
-					if r == nil {
-						return
-					}
-					var v string
-					switch r.(type) {
-					case error:
-						v = r.(error).Error()
-					case runtime.Error:
-						v = r.(runtime.Error).Error()
-					case string:
-						v = r.(string)
-					}
-					log.Error("error in indexer,", v)
-				}
-			}
+			// if !global.Env().IsDebug {
+			// 	if r := recover(); r != nil {
+
+			// 		if r == nil {
+			// 			return
+			// 		}
+			// 		var v string
+			// 		switch r.(type) {
+			// 		case error:
+			// 			v = r.(error).Error()
+			// 		case runtime.Error:
+			// 			v = r.(runtime.Error).Error()
+			// 		case string:
+			// 			v = r.(string)
+			// 		}
+			// 		log.Error("error in indexer,", v)
+			// 	}
+			// }
 		}()
 
 		for {

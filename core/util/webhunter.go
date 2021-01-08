@@ -26,6 +26,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"math"
 
 	"crypto/tls"
 	"fmt"
@@ -413,7 +414,8 @@ func ExecuteRequest(req *Request) (result *Result, err error) {
 		client.Transport = tbTransport
 	}
 
-	return execute(request, req)
+	return executeWithBackoff(&(Backoff{ EXP, time.Second, 0, 10}), request, req)
+
 }
 
 // HttpGetWithCookie issue http request with cookie
@@ -473,6 +475,70 @@ var client = &http.Client{
 	Transport:     t,
 	Timeout:       timeout,
 	CheckRedirect: nil,
+}
+
+
+type BackoffType int32
+
+const (
+	LINEAR BackoffType = iota
+	EXP
+)
+
+type Backoff struct {
+	Type			BackoffType
+	Interval  time.Duration
+	curTry    int
+	maxTry    int
+}
+
+func executeWithBackoff(backoff *Backoff, req *http.Request, baseReq *Request) (res *Result, err error) {
+
+	defer func() {
+
+		// As long as try is less than max allowed tries, take error form panic, and try again. 
+		// Once tries exceeds max tries, panic will bubble up and potentially crash program.
+		if backoff.curTry < backoff.maxTry && r := recover(); r != nil {
+			var v string
+			switch r.(type) {
+				case error:
+					v = r.(error).Error()
+				case runtime.Error:
+					v = r.(runtime.Error).Error()
+				case string:
+					v = r.(string)
+			}
+
+			log.Debug("Recovering from panic during execute")
+			err = v
+		}
+	}
+
+	// Attempt to execute the request
+	res, err = execute(req, baseReq)
+
+	// If there was an error, and still under max tries limit make a recursive call to try request again. 
+	if err != nil && backoff.curTry < backoff.maxTry {
+		log.Debug("Recover attempt " +  try + " of " + maxTries + ". Encountered error.")
+		log.Error("Recovering from", v)
+		
+
+		// Sleep for specified interval
+		if backoff.Type == LINEAR {
+			log.Debugf("Sleeping for %i", backoff.Interval)
+			time.Sleep(backoff.Interval)
+		}
+		else if backoff.Type == EXP {
+			log.Debugf("Sleeping for %i", backoff.Interval * math.pow(2, backoff.curTry))
+			time.Sleep(backoff.Interval * math.pow(2, backoff.curTry))
+		}
+
+		// Try again
+		backoff.curTry = backOff.curTry + 1
+		res, err = backoffExecute(backoff req, baseReq)
+	}
+
+	return res, err
 }
 
 func execute(req *http.Request, baseReq *Request) (*Result, error) {
