@@ -496,46 +496,46 @@ func executeWithBackoff(backoff *Backoff, req *http.Request, baseReq *Request) (
 
 	defer func() {
 
-		// As long as try is less than max allowed tries, take error form panic, and try again. 
+		// As long as try is less than max allowed tries, take error from panic, and try again. 
 		// Once tries exceeds max tries, panic will bubble up and potentially crash program.
-		if backoff.curTry < backoff.maxTry && r := recover(); r != nil {
-			var v string
-			switch r.(type) {
-				case error:
-					v = r.(error).Error()
-				case runtime.Error:
-					v = r.(runtime.Error).Error()
-				case string:
-					v = r.(string)
-			}
+		if backoff.curTry < backoff.maxTry {
 
-			log.Debug("Recovering from panic during execute")
-			err = v
+			// Handle panic
+			if r := recover(); r != nil {
+				log.Debug("Recovering from panic during execute")
+				var ok bool
+				err, ok = r.(error)
+				if !ok {
+					err = fmt.Errorf("pkg: %v", r)
+				}
+			}
 		}
-	}
+	}()
 
 	// Attempt to execute the request
 	res, err = execute(req, baseReq)
 
 	// If there was an error, and still under max tries limit make a recursive call to try request again. 
 	if err != nil && backoff.curTry < backoff.maxTry {
-		log.Debug("Recover attempt " +  try + " of " + maxTries + ". Encountered error.")
-		log.Error("Recovering from", v)
+		log.Debugf("Recover attempt %i of %i. Encountered error.", backoff.curTry, backoff.maxTry)
+		log.Error("Recovering from", err)
 		
 
 		// Sleep for specified interval
 		if backoff.Type == LINEAR {
 			log.Debugf("Sleeping for %i", backoff.Interval)
 			time.Sleep(backoff.Interval)
-		}
-		else if backoff.Type == EXP {
-			log.Debugf("Sleeping for %i", backoff.Interval * math.pow(2, backoff.curTry))
-			time.Sleep(backoff.Interval * math.pow(2, backoff.curTry))
+		} else if backoff.Type == EXP {
+			exp := math.Pow(2, float64(backoff.curTry))
+			dur := backoff.Interval * time.Duration(exp)
+
+			log.Debugf("Sleeping for %i", dur)
+			time.Sleep(dur)
 		}
 
 		// Try again
-		backoff.curTry = backOff.curTry + 1
-		res, err = backoffExecute(backoff req, baseReq)
+		backoff.curTry = backoff.curTry + 1
+		res, err = executeWithBackoff(backoff, req, baseReq)
 	}
 
 	return res, err
