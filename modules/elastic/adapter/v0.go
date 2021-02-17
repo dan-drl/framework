@@ -83,13 +83,13 @@ func (c *ESAPIV0) Request(method, url string, body []byte) (result *util.Result,
 }
 
 func (c *ESAPIV0) Init() {
-	c.initTemplate(c.Config.IndexPrefix)
+	c.initTemplate(c.Config.IndexPrefix, c.Config.IndexSuffix)
 }
 
-func (c *ESAPIV0) getDefaultTemplate(indexPrefix string) string {
+func (c *ESAPIV0) getDefaultTemplate(indexPrefix string, indexSuffix string) string {
 	template := `
 {
-"template": "%s*",
+"template": "%s*%s",
 "settings": {
     "number_of_shards": %v,
     "index.max_result_window":10000000
@@ -111,10 +111,10 @@ func (c *ESAPIV0) getDefaultTemplate(indexPrefix string) string {
   }
 }
 `
-	return fmt.Sprintf(template, indexPrefix, 1, TypeName6)
+	return fmt.Sprintf(template, indexPrefix, indexSuffix, 1, TypeName6)
 }
 
-func (c *ESAPIV0) initTemplate(indexPrefix string) {
+func (c *ESAPIV0) initTemplate(indexPrefix string, indexSuffix string) {
 	if global.Env().IsDebug {
 		log.Trace("init elasticsearch template")
 	}
@@ -131,7 +131,7 @@ func (c *ESAPIV0) initTemplate(indexPrefix string) {
 	}
 
 	if !exist {
-		template := c.getDefaultTemplate(indexPrefix)
+		template := c.getDefaultTemplate(indexPrefix, indexSuffix)
 		if global.Env().IsDebug {
 			log.Trace("template: ", template)
 		}
@@ -155,9 +155,7 @@ func (c *ESAPIV0) initTemplate(indexPrefix string) {
 
 // Index index a document into elasticsearch
 func (c *ESAPIV0) Index(indexName string, id interface{}, data interface{}) (*elastic.InsertResponse, error) {
-	if c.Config.IndexPrefix != "" {
-		indexName = c.Config.IndexPrefix + indexName
-	}
+	indexName = c.ToIndexName(indexName)
 	url := fmt.Sprintf("%s/%s/%s/%s", c.Config.Endpoint, indexName, TypeName6, id)
 
 	js, err := json.Marshal(data)
@@ -196,9 +194,7 @@ func (c *ESAPIV0) Index(indexName string, id interface{}, data interface{}) (*el
 
 // Get fetch document by id
 func (c *ESAPIV0) Get(indexName, id string) (*elastic.GetResponse, error) {
-	if c.Config.IndexPrefix != "" {
-		indexName = c.Config.IndexPrefix + indexName
-	}
+	indexName = c.ToIndexName(indexName)
 	url := c.Config.Endpoint + "/" + indexName + "/" + TypeName6 + "/" + id
 
 	resp, err := c.Request(util.Verb_GET, url, nil)
@@ -227,9 +223,7 @@ func (c *ESAPIV0) Get(indexName, id string) (*elastic.GetResponse, error) {
 
 // Delete used to delete document by id
 func (c *ESAPIV0) Delete(indexName, id string) (*elastic.DeleteResponse, error) {
-	if c.Config.IndexPrefix != "" {
-		indexName = c.Config.IndexPrefix + indexName
-	}
+	indexName = c.ToIndexName(indexName)
 	url := c.Config.Endpoint + "/" + indexName + "/" + TypeName6 + "/" + id
 
 	if global.Env().IsDebug {
@@ -262,11 +256,7 @@ func (c *ESAPIV0) Delete(indexName, id string) (*elastic.DeleteResponse, error) 
 
 // Count used to count how many docs in one index
 func (c *ESAPIV0) Count(indexName string) (*elastic.CountResponse, error) {
-
-	if c.Config.IndexPrefix != "" {
-		indexName = c.Config.IndexPrefix + indexName
-	}
-
+	indexName = c.ToIndexName(indexName)
 	url := c.Config.Endpoint + "/" + indexName + "/_count"
 
 	if global.Env().IsDebug {
@@ -312,11 +302,7 @@ func (c *ESAPIV0) Search(indexName string, query *elastic.SearchRequest) (*elast
 }
 
 func (c *ESAPIV0) SearchWithRawQueryDSL(indexName string, queryDSL []byte) (*elastic.SearchResponse, error) {
-
-	if c.Config.IndexPrefix != "" {
-		indexName = c.Config.IndexPrefix + indexName
-	}
-
+	indexName = c.ToIndexName(indexName)
 	url := c.Config.Endpoint + "/" + indexName + "/_search"
 
 	if global.Env().IsDebug {
@@ -343,10 +329,7 @@ func (c *ESAPIV0) SearchWithRawQueryDSL(indexName string, queryDSL []byte) (*ela
 }
 
 func (c *ESAPIV0) IndexExists(indexName string) (bool, error) {
-	if c.Config.IndexPrefix != "" {
-		indexName = c.Config.IndexPrefix + indexName
-	}
-
+	indexName = c.ToIndexName(indexName)
 	url := fmt.Sprintf("%s/%s", c.Config.Endpoint, indexName)
 	resp, err := c.Request(util.Verb_GET, url, nil)
 
@@ -529,9 +512,7 @@ func cleanSettings(settings map[string]interface{}) {
 }
 
 func (s *ESAPIV0) UpdateIndexSettings(name string, settings map[string]interface{}) error {
-	if s.Config.IndexPrefix != "" {
-		name = s.Config.IndexPrefix + name
-	}
+	name = s.ToIndexName(name)
 
 	if global.Env().IsDebug {
 		log.Trace("update index: ", name, ", ", settings)
@@ -578,10 +559,7 @@ func (s *ESAPIV0) UpdateIndexSettings(name string, settings map[string]interface
 }
 
 func (s *ESAPIV0) UpdateMapping(indexName string, mappings []byte) ([]byte, error) {
-	if s.Config.IndexPrefix != "" {
-		indexName = s.Config.IndexPrefix + indexName
-	}
-
+	indexName = s.ToIndexName(indexName)
 	url := fmt.Sprintf("%s/%s/%s/_mapping", s.Config.Endpoint, indexName, TypeName6)
 
 	resp, err := s.Request(util.Verb_POST, url, mappings)
@@ -596,9 +574,7 @@ func (s *ESAPIV0) UpdateMapping(indexName string, mappings []byte) ([]byte, erro
 }
 
 func (c *ESAPIV0) DeleteIndex(indexName string) (err error) {
-	if c.Config.IndexPrefix != "" {
-		indexName = c.Config.IndexPrefix + indexName
-	}
+	indexName = c.ToIndexName(indexName)
 
 	if global.Env().IsDebug {
 		log.Trace("start delete index: ", indexName)
@@ -614,10 +590,7 @@ func (c *ESAPIV0) DeleteIndex(indexName string) (err error) {
 }
 
 func (c *ESAPIV0) CreateIndex(indexName string, settings map[string]interface{}) (err error) {
-	if c.Config.IndexPrefix != "" {
-		indexName = c.Config.IndexPrefix + indexName
-	}
-
+	indexName = c.ToIndexName(indexName)
 	cleanSettings(settings)
 
 	body := bytes.Buffer{}
@@ -644,9 +617,7 @@ func (c *ESAPIV0) CreateIndex(indexName string, settings map[string]interface{})
 }
 
 func (s *ESAPIV0) Refresh(name string) (err error) {
-	if s.Config.IndexPrefix != "" {
-		name = s.Config.IndexPrefix + name
-	}
+	name = s.ToIndexName(name)
 
 	if global.Env().IsDebug {
 		log.Trace("refresh index: ", name)
@@ -781,6 +752,19 @@ func (c *ESAPIV0) PutTemplate(templateName string, template []byte) ([]byte, err
 	responseHandle(resp)
 
 	return resp.Body, nil
+}
+
+func (c *ESAPIV0) ToIndexName(indexName string) string  {
+	temp := indexName
+	if c.Config.IndexPrefix != "" {
+		temp = c.Config.IndexPrefix + temp
+	}
+
+	if c.Config.IndexSuffix != "" {
+		temp = temp + c.Config.IndexSuffix
+	}
+
+	return temp
 }
 
 func responseHandle(resp *util.Result) {

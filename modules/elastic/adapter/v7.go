@@ -34,13 +34,13 @@ type ESAPIV7 struct {
 }
 
 func (c *ESAPIV7) Init() {
-	c.initTemplate(c.Config.IndexPrefix)
+	c.initTemplate(c.Config.IndexPrefix, c.Config.IndexSuffix)
 }
 
-func (c *ESAPIV7) getDefaultTemplate(indexPrefix string) string {
+func (c *ESAPIV7) getDefaultTemplate(indexPrefix string, indexSuffix string) string {
 	template := `
 {
-"index_patterns": "%s*",
+"index_patterns": "%s*%s",
 "settings": {
     "number_of_shards": %v,
     "index.max_result_window":10000000
@@ -60,10 +60,10 @@ func (c *ESAPIV7) getDefaultTemplate(indexPrefix string) string {
   }
 }
 `
-	return fmt.Sprintf(template, indexPrefix, 1)
+	return fmt.Sprintf(template, indexPrefix, indexSuffix, 1)
 }
 
-func (c *ESAPIV7) initTemplate(indexPrefix string) {
+func (c *ESAPIV7) initTemplate(indexPrefix string, indexSuffix string) {
 	if global.Env().IsDebug {
 		log.Trace("init elasticsearch template")
 	}
@@ -78,7 +78,7 @@ func (c *ESAPIV7) initTemplate(indexPrefix string) {
 		panic(err)
 	}
 	if !exist {
-		template := c.getDefaultTemplate(indexPrefix)
+		template := c.getDefaultTemplate(indexPrefix, indexSuffix)
 		log.Trace("template: ", template)
 		res, err := c.PutTemplate(templateName, []byte(template))
 		if err != nil {
@@ -96,9 +96,9 @@ const TypeName7 = "_doc"
 
 // Delete used to delete document by id
 func (c *ESAPIV7) Delete(indexName, id string) (*elastic.DeleteResponse, error) {
-	if c.Config.IndexPrefix != "" {
-		indexName = c.Config.IndexPrefix + indexName
-	}
+
+	indexName = c.ToIndexName(indexName)
+
 	url := c.Config.Endpoint + "/" + indexName + "/" + TypeName7 + "/" + id
 
 	resp, err := c.Request(util.Verb_DELETE, url, nil)
@@ -122,9 +122,9 @@ func (c *ESAPIV7) Delete(indexName, id string) (*elastic.DeleteResponse, error) 
 
 // Get fetch document by id
 func (c *ESAPIV7) Get(indexName, id string) (*elastic.GetResponse, error) {
-	if c.Config.IndexPrefix != "" {
-		indexName = c.Config.IndexPrefix + indexName
-	}
+
+	indexName = c.ToIndexName(indexName)
+
 	url := c.Config.Endpoint + "/" + indexName + "/" + TypeName7 + "/" + id
 
 	resp, err := c.Request(util.Verb_GET, url, nil)
@@ -148,9 +148,9 @@ func (c *ESAPIV7) Get(indexName, id string) (*elastic.GetResponse, error) {
 
 // IndexDoc index a document into elasticsearch
 func (c *ESAPIV7) Index(indexName string, id interface{}, data interface{}) (*elastic.InsertResponse, error) {
-	if c.Config.IndexPrefix != "" {
-		indexName = c.Config.IndexPrefix + indexName
-	}
+
+	indexName = c.ToIndexName(indexName)
+
 	url := fmt.Sprintf("%s/%s/%s/%s", c.Config.Endpoint, indexName, TypeName7, id)
 
 	js, err := json.Marshal(data)
@@ -186,9 +186,9 @@ func (c *ESAPIV7) Index(indexName string, id interface{}, data interface{}) (*el
 }
 
 func (c *ESAPIV7) UpdateMapping(indexName string, mappings []byte) ([]byte, error) {
-	if c.Config.IndexPrefix != "" {
-		indexName = c.Config.IndexPrefix + indexName
-	}
+	
+	indexName = c.ToIndexName(indexName)
+
 	if global.Env().IsDebug {
 		log.Debug("update mapping, ", indexName, ", ", string(mappings))
 	}

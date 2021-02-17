@@ -41,6 +41,7 @@ type ElasticsearchConfig struct {
 	Endpoint     string `config:"endpoint"`
 	TemplateName string `config:"template_name"`
 	IndexPrefix  string `config:"index_prefix"`
+	IndexSuffix  string `config:"index_suffix"`
 	BasicAuth    *struct {
 		Username string `config:"username"`
 		Password string `config:"password"`
