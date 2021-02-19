@@ -33,6 +33,7 @@ type ESAPIV6 struct {
 
 func (c *ESAPIV6) Init() {
 	c.initTemplate(c.Config.IndexPrefix, c.Config.IndexSuffix)
+	c.Config.Check()
 }
 
 func (c *ESAPIV6) getDefaultTemplate(indexPrefix string, indexSuffix string) string {

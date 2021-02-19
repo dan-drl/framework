@@ -24,6 +24,8 @@ import (
 type ORM interface {
 	RegisterSchema(t interface{}) error
 
+	RequireSchema(t interface{})
+
 	Save(o interface{}) error
 
 	Update(o interface{}) error
@@ -199,6 +201,10 @@ func GroupBy(o interface{}, selectField, groupField, haveQuery string, haveValue
 
 func RegisterSchema(t interface{}) error {
 	return getHandler().RegisterSchema(t)
+}
+
+func RequireSchema(t interface{})  {
+	getHandler().RequireSchema(t)
 }
 
 var handler ORM

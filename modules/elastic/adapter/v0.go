@@ -84,6 +84,7 @@ func (c *ESAPIV0) Request(method, url string, body []byte) (result *util.Result,
 
 func (c *ESAPIV0) Init() {
 	c.initTemplate(c.Config.IndexPrefix, c.Config.IndexSuffix)
+	c.Config.Check()
 }
 
 func (c *ESAPIV0) getDefaultTemplate(indexPrefix string, indexSuffix string) string {
@@ -160,6 +161,14 @@ func (c *ESAPIV0) Index(indexName string, id interface{}, data interface{}) (*el
 
 	js, err := json.Marshal(data)
 
+	if strings.Contains(string(js), "engineId") {
+		panic("No engineId set!")
+	}
+
+	if strings.Contains(string(js), "accountId") {
+		panic("No accountId set!")
+	}
+ 
 	if global.Env().IsDebug {
 		log.Trace("indexing doc: ", url, ",", string(js))
 	}
@@ -331,6 +340,9 @@ func (c *ESAPIV0) SearchWithRawQueryDSL(indexName string, queryDSL []byte) (*ela
 func (c *ESAPIV0) IndexExists(indexName string) (bool, error) {
 	indexName = c.ToIndexName(indexName)
 	url := fmt.Sprintf("%s/%s", c.Config.Endpoint, indexName)
+
+	log.Debug("Checking for schema on " + indexName)
+
 	resp, err := c.Request(util.Verb_GET, url, nil)
 
 	if err != nil {
@@ -765,6 +777,24 @@ func (c *ESAPIV0) ToIndexName(indexName string) string  {
 	}
 
 	return temp
+}
+
+func (c *ESAPIV0) AddEngineField(data interface{}) (interface{}, error)  {
+	js, err := json.Marshal(data)
+	if err != nil {
+		return data, err
+	}
+
+	engine := c.Config.Engine
+	if engine == nil {
+		log.Info("No engine configured, not adding engine field!")
+		return data, nil
+	}
+	
+	var m map[string]interface{}
+	json.Unmarshal(js, &m)
+	m["engine"] = engine
+	return m, nil
 }
 
 func responseHandle(resp *util.Result) {

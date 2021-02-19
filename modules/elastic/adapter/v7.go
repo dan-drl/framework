@@ -35,6 +35,7 @@ type ESAPIV7 struct {
 
 func (c *ESAPIV7) Init() {
 	c.initTemplate(c.Config.IndexPrefix, c.Config.IndexSuffix)
+	c.Config.Check()
 }
 
 func (c *ESAPIV7) getDefaultTemplate(indexPrefix string, indexSuffix string) string {
@@ -153,7 +154,15 @@ func (c *ESAPIV7) Index(indexName string, id interface{}, data interface{}) (*el
 
 	url := fmt.Sprintf("%s/%s/%s/%s", c.Config.Endpoint, indexName, TypeName7, id)
 
+	data, err := c.AddEngineField(data)
+	if err != nil {
+		panic("Error decorating data with engine field.")
+	}
+
 	js, err := json.Marshal(data)
+	if err != nil {
+		panic("Error converting data to json")
+	}
 
 	if global.Env().IsDebug {
 		log.Debug("indexing doc: ", url, ",", string(js))

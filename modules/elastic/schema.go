@@ -67,6 +67,18 @@ func parseAnnotation(mapping []util.Annotation) string {
 	return json
 }
 
+func (handler ElasticORM) RequireSchema(t interface{}) {
+	
+	indexName := getIndexName(t)
+	exist, err := handler.Client.IndexExists(indexName)
+	if err != nil {
+		panic(err)
+	}
+	if !exist {
+		panic("Schema missing for " + indexName)
+	}
+}
+
 //elastic_mapping:"content: { type: binary, doc_values:false }"
 func (handler ElasticORM) RegisterSchema(t interface{}) error {
 
