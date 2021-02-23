@@ -59,6 +59,8 @@ type SystemConfig struct {
 
 	CookieSecret string `config:"cookie_secret"`
 
+	AllowIndexCreation bool `config:"allow_index_creation"`
+
 	AllowMultiInstance bool `config:"allow_multi_instance"`
 
 	MaxNumOfInstance int `config:"max_num_of_instances"`

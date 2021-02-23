@@ -32,13 +32,14 @@ type ESAPIV6 struct {
 }
 
 func (c *ESAPIV6) Init() {
-	c.initTemplate(c.Config.IndexPrefix)
+	c.initTemplate(c.Config.IndexPrefix, c.Config.IndexSuffix)
+	c.Config.Check()
 }
 
-func (c *ESAPIV6) getDefaultTemplate(indexPrefix string) string {
+func (c *ESAPIV6) getDefaultTemplate(indexPrefix string, indexSuffix string) string {
 	template := `
 {
-"index_patterns": "%s*",
+"index_patterns": "%s*%s",
 "settings": {
     "number_of_shards": %v,
     "index.max_result_window":10000000
@@ -60,10 +61,10 @@ func (c *ESAPIV6) getDefaultTemplate(indexPrefix string) string {
   }
 }
 `
-	return fmt.Sprintf(template, indexPrefix, 1, TypeName6)
+	return fmt.Sprintf(template, indexPrefix, indexSuffix, 1, TypeName6)
 }
 
-func (c *ESAPIV6) initTemplate(indexPrefix string) {
+func (c *ESAPIV6) initTemplate(indexPrefix string, indexSuffix string) {
 	if global.Env().IsDebug {
 		log.Trace("init elasticsearch template")
 	}
@@ -79,7 +80,7 @@ func (c *ESAPIV6) initTemplate(indexPrefix string) {
 	}
 
 	if !exist {
-		template := c.getDefaultTemplate(indexPrefix)
+		template := c.getDefaultTemplate(indexPrefix, indexSuffix)
 		if global.Env().IsDebug {
 			log.Trace("template: ", template)
 		}
