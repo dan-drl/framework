@@ -48,6 +48,8 @@ type API interface {
 	DeleteIndex(name string) error
 
 	Refresh(name string) (err error)
+
+	GetEngineKey() string
 }
 
 type TemplateAPI interface {

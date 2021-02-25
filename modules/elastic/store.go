@@ -25,6 +25,7 @@ import (
 	"github.com/dan-drl/framework/core/errors"
 	"github.com/dan-drl/framework/core/orm"
 	"github.com/dan-drl/framework/core/util"
+	"github.com/dan-drl/framework/core/global"
 )
 
 type ElasticStore struct {
@@ -32,7 +33,11 @@ type ElasticStore struct {
 }
 
 func (store ElasticStore) Open() error {
-	orm.RegisterSchema(Blob{})
+	if global.Env().SystemConfig.AllowIndexCreation {
+		orm.RegisterSchema(Blob{})
+	} else {
+		orm.RequireSchema(Blob{})
+	}
 	return nil
 }
 
@@ -55,7 +60,8 @@ func (store ElasticStore) GetCompressedValue(bucket string, key []byte) ([]byte,
 }
 
 func (store ElasticStore) GetValue(bucket string, key []byte) ([]byte, error) {
-	response, err := store.Client.Get(blogIndexName, getKey(bucket, string(key)))
+	bucketKey := store.getKey(bucket, string(key))
+	response, err := store.Client.Get(blobIndexName, bucketKey)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +79,7 @@ func (store ElasticStore) GetValue(bucket string, key []byte) ([]byte, error) {
 	return nil, errors.New("not found")
 }
 
-var blogIndexName = "blob"
+var blobIndexName = "blob"
 
 func (store ElasticStore) AddValueCompress(bucket string, key []byte, value []byte) error {
 	value, err := lz4.Encode(nil, value)
@@ -84,19 +90,37 @@ func (store ElasticStore) AddValueCompress(bucket string, key []byte, value []by
 	return store.AddValue(bucket, key, value)
 }
 
-func getKey(bucket, key string) string {
+func (store ElasticStore) getKey(bucket, key string) string {
+
+	// Note: KV docs are looked up by key, which in elastic is done via a document id on the
+	// blob index. Unfortunately, filtered alaises don't apply to a GET $idx/_doc/$ID query.
+	// As a result, when computing key, we need to take engine into account if it is specified.
+	// This is simalar in nature, to injecting the engine field into each indexed document.
+	// Ultimately the goal is to be able to use one index accross different search engines and
+	// not have the data get mixed up.
+
+	engineKey := store.Client.GetEngineKey()
+
+	if engineKey != "" {
+		log.Trace("Generating key with engine component")
+		return util.MD5digest(fmt.Sprintf("EK:%s:%s_%s", engineKey, bucket, key))
+	}
+	
+	log.Trace("Generating key with no engine component")
 	return util.MD5digest(fmt.Sprintf("%s_%s", bucket, key))
 }
 
 func (store ElasticStore) AddValue(bucket string, key []byte, value []byte) error {
 	file := Blob{}
 	file.Content = base64.URLEncoding.EncodeToString(value)
-	_, err := store.Client.Index(blogIndexName, getKey(bucket, string(key)), file)
+	bucketKey := store.getKey(bucket, string(key))
+	_, err := store.Client.Index(blobIndexName, bucketKey, file)
+	log.Trace("Added value. ", bucketKey)
 	return err
 }
 
 func (store ElasticStore) DeleteKey(bucket string, key []byte) error {
-	_, err := store.Client.Delete(blogIndexName, getKey(bucket, string(key)))
+	_, err := store.Client.Delete(blobIndexName, store.getKey(bucket, string(key)))
 	return err
 }
 
