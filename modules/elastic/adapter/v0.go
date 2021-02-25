@@ -797,6 +797,15 @@ func (c *ESAPIV0) AddEngineField(data interface{}) (interface{}, error)  {
 	return m, nil
 }
 
+func (c *ESAPIV0) GetEngineKey() string {
+	engine := c.Config.Engine
+	if engine == nil {
+		log.Info("No engine configured. Using empty key value!")
+		return ""
+	}
+	return fmt.Sprintf("%s_%s", engine.AccountID, engine.EngineID); 
+}
+
 func responseHandle(resp *util.Result) {
 	if resp.StatusCode != 200 && resp.StatusCode != 201 && resp.StatusCode != 404 {
 		panic(errors.New(string(resp.Body)))
