@@ -2,6 +2,8 @@ package mysql
 
 import (
 	"github.com/jinzhu/gorm"
+	"go.elastic.co/apm/module/apmgorm"
+	_ "go.elastic.co/apm/module/apmgorm/dialects/mysql"
 )
 
 // MySQLConfig defines mysql related config, currently only provide connection, eg: root:password@tcp(127.0.0.1:3306)/gopa?charset=utf8&parseTime=true&loc=Local
@@ -16,7 +18,7 @@ type MySQLConfig struct {
 func GetInstance(cfg *MySQLConfig) *gorm.DB {
 
 	var err error
-	db, err := gorm.Open("mysql", cfg.Connection)
+	db, err := apmgorm.Open("mysql", cfg.Connection)
 	if err != nil {
 		panic("failed to connect database")
 	}
