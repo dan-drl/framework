@@ -2,12 +2,10 @@ package sqlite
 
 import (
 	"fmt"
+	"github.com/dan-drl/framework/core/global"
+	"github.com/jinzhu/gorm"
 	"os"
 	"path"
-
-	"github.com/dan-drl/framework/core/global"
-
-	"github.com/jinzhu/gorm"
 	"go.elastic.co/apm/module/apmgorm"
 	_ "go.elastic.co/apm/module/apmgorm/dialects/sqlite"
 )

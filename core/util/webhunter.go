@@ -20,13 +20,13 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io/ioutil"
-	"math"
 	"net"
 	"net/http"
 	uri "net/url"
 	"os"
 	"strings"
 	"time"
+	"math"
 
 	"crypto/tls"
 	"fmt"
@@ -317,6 +317,8 @@ type Result struct {
 	Size       uint64
 }
 
+
+
 const userAgent = "Mozilla/5.0 (compatible; DRL/1.0; +http://github.com/dan-drl/framework)"
 
 const ContentTypeJson = "application/json;charset=utf-8"
@@ -414,7 +416,7 @@ func ExecuteRequest(req *Request) (result *Result, err error) {
 		client.Transport = tbTransport
 	}
 
-	return executeWithBackoff(&(Backoff{EXP, time.Second, 0, 5}), request, req)
+	return executeWithBackoff(&(Backoff{ EXP, time.Second, 0, 5}), request, req)
 
 }
 
@@ -478,6 +480,7 @@ var httpclient = &http.Client{
 }
 var client = apmhttp.WrapClient(httpclient)
 
+
 type BackoffType int32
 
 const (
@@ -486,10 +489,10 @@ const (
 )
 
 type Backoff struct {
-	Type     BackoffType
-	Interval time.Duration
-	curTry   int
-	maxTry   int
+	Type			BackoffType
+	Interval  time.Duration
+	curTry    int
+	maxTry    int
 }
 
 func executeWithBackoff(backoff *Backoff, req *http.Request, baseReq *Request) (res *Result, err error) {
@@ -497,7 +500,7 @@ func executeWithBackoff(backoff *Backoff, req *http.Request, baseReq *Request) (
 	// Attempt to execute the request
 	res, err = executeWrapper(backoff, req, baseReq)
 
-	// If there was an error, and still under max tries limit make a recursive call to try request again.
+	// If there was an error, and still under max tries limit make a recursive call to try request again. 
 	if err != nil && backoff.curTry < backoff.maxTry {
 		log.Debugf("Recovery attempt %d of %d. Encountered error.", backoff.curTry, backoff.maxTry)
 		log.Error("Recovering from: ", err)
@@ -524,7 +527,7 @@ func executeWithBackoff(backoff *Backoff, req *http.Request, baseReq *Request) (
 func executeWrapper(backoff *Backoff, req *http.Request, baseReq *Request) (result *Result, err error) {
 	defer func() {
 
-		// As long as try is less than max allowed tries, take error from panic, and try again.
+		// As long as try is less than max allowed tries, take error from panic, and try again. 
 		// Once tries exceeds max tries, panic will bubble up and potentially crash program.
 		if backoff.curTry < backoff.maxTry {
 
