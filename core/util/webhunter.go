@@ -39,6 +39,8 @@ import (
 	"encoding/json"
 
 	"gopkg.in/natefinch/lumberjack.v2"
+
+	"go.elastic.co/apm/module/apmhttp"
 )
 
 const (
@@ -471,11 +473,12 @@ var t = &http.Transport{
 	TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
 }
 
-var client = &http.Client{
+var httpclient = &http.Client{
 	Transport:     t,
 	Timeout:       timeout,
 	CheckRedirect: nil,
 }
+var client = apmhttp.WrapClient(httpclient)
 
 
 type BackoffType int32
