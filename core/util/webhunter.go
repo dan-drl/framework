@@ -408,8 +408,8 @@ func ExecuteRequest(req *Request) (result *Result, err error) {
 		tbTransport := &http.Transport{
 			Dial: tbDialer.Dial,
 			DialContext: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 30 * time.Second,
+				Timeout:   40 * time.Second,
+				KeepAlive: 40 * time.Second,
 				DualStack: true,
 			}).DialContext,
 		}
