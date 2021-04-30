@@ -40,6 +40,8 @@ import (
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
+	"golang.org/x/net/context/ctxhttp"
+	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
 )
 
@@ -554,8 +556,13 @@ func execute(req *http.Request, baseReq *Request) (*Result, error) {
 	requestId := baseReq.Log()
 
 	result := &Result{}
-	resp, err := client.Do(req)
 
+	tx := apm.DefaultTracer.StartTransaction(fmt.Sprintf("%s /crawler", baseReq.Method), "pipeline")
+	defer tx.End()
+
+	ctx := apm.ContextWithTransaction(req.Context(), tx)
+	resp, err := ctxhttp.Do(ctx, client, req)
+	
 	defer func() {
 		if resp != nil && resp.Body != nil {
 			io.Copy(ioutil.Discard, resp.Body)
@@ -564,6 +571,7 @@ func execute(req *http.Request, baseReq *Request) (*Result, error) {
 	}()
 
 	if err != nil {
+		apm.CaptureError(ctx, err).Send()
 		panic(err)
 		//return result, err
 	}
@@ -600,6 +608,7 @@ func execute(req *http.Request, baseReq *Request) (*Result, error) {
 		reader, err = gzip.NewReader(resp.Body)
 
 		if err != nil {
+			apm.CaptureError(ctx, err).Send()
 			panic(err)
 		}
 	}
@@ -609,6 +618,7 @@ func execute(req *http.Request, baseReq *Request) (*Result, error) {
 		io.Copy(ioutil.Discard, reader)
 		reader.Close()
 		if err != nil {
+			apm.CaptureError(ctx, err).Send()
 			panic(err)
 		}
 

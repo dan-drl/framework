@@ -105,6 +105,8 @@ fetch-depends:
 	$(GO) get -u github.com/rs/cors
 	$(GO) get -u google.golang.org/grpc
 	$(GO) get -u golang.org/x/net/http2
+	$(GO) get -u golang.org/x/net/context/ctxhttp
+	$(GO) get -u go.elastic.co/apm
 	$(GO) get -u go.elastic.co/apm/module/apmhttp
 	$(GO) get -u go.elastic.co/apm/module/apmgorm
 	$(GO) get -u go.elastic.co/apm/module/apmgorm/dialects/mysql
