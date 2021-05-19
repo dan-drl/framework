@@ -19,14 +19,15 @@ package util
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"io/ioutil"
+	"math"
 	"net"
 	"net/http"
 	uri "net/url"
 	"os"
 	"strings"
 	"time"
-	"math"
 
 	"crypto/tls"
 	"fmt"
@@ -40,9 +41,8 @@ import (
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"golang.org/x/net/context/ctxhttp"
-	"go.elastic.co/apm"
 	"go.elastic.co/apm/module/apmhttp"
+	"golang.org/x/net/context/ctxhttp"
 )
 
 const (
@@ -329,12 +329,17 @@ const ContentTypeForm = "application/x-www-form-urlencoded;charset=UTF-8"
 
 // ExecuteRequest issue a request
 func ExecuteRequest(req *Request) (result *Result, err error) {
+	return ExecuteRequestWithContext(req, context.Background())
+}
+
+// ExecuteRequestWithContext issue a request with context
+func ExecuteRequestWithContext(req *Request, context context.Context) (result *Result, err error) {
 	var request *http.Request
 	if req.Body != nil && len(req.Body) > 0 {
 		postBytesReader := bytes.NewReader(req.Body)
-		request, err = http.NewRequest(string(req.Method), req.Url, postBytesReader)
+		request, err = http.NewRequestWithContext(context, string(req.Method), req.Url, postBytesReader)
 	} else {
-		request, err = http.NewRequest(string(req.Method), req.Url, nil)
+		request, err = http.NewRequestWithContext(context, string(req.Method), req.Url, nil)
 	}
 
 	if err != nil {
@@ -557,11 +562,7 @@ func execute(req *http.Request, baseReq *Request) (*Result, error) {
 
 	result := &Result{}
 
-	tx := apm.DefaultTracer.StartTransaction(fmt.Sprintf("%s /crawler", baseReq.Method), "pipeline")
-	defer tx.End()
-
-	ctx := apm.ContextWithTransaction(req.Context(), tx)
-	resp, err := ctxhttp.Do(ctx, client, req)
+	resp, err := ctxhttp.Do(req.Context(), client, req)
 	
 	defer func() {
 		if resp != nil && resp.Body != nil {
@@ -571,7 +572,6 @@ func execute(req *http.Request, baseReq *Request) (*Result, error) {
 	}()
 
 	if err != nil {
-		apm.CaptureError(ctx, err).Send()
 		panic(err)
 		//return result, err
 	}
@@ -608,7 +608,6 @@ func execute(req *http.Request, baseReq *Request) (*Result, error) {
 		reader, err = gzip.NewReader(resp.Body)
 
 		if err != nil {
-			apm.CaptureError(ctx, err).Send()
 			panic(err)
 		}
 	}
@@ -618,7 +617,6 @@ func execute(req *http.Request, baseReq *Request) (*Result, error) {
 		io.Copy(ioutil.Discard, reader)
 		reader.Close()
 		if err != nil {
-			apm.CaptureError(ctx, err).Send()
 			panic(err)
 		}
 

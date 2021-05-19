@@ -17,6 +17,7 @@ limitations under the License.
 package pipeline
 
 import (
+	"context"
 	log "github.com/cihub/seelog"
 	"github.com/dan-drl/framework/core/errors"
 	"github.com/dan-drl/framework/core/util"
@@ -32,10 +33,27 @@ type Context struct {
 	IgnoreBroken bool        `json:"ignore_broken"`
 	Payload      interface{} `json:"-"`
 
+	apmContext context.Context
+	apmLogger log.LoggerInterface
+
 	//private parameters
 	breakFlag  bool
 	exitFlag   bool
 	PipelineID string
+}
+
+// Transaction returns the apm transaction recording this pipeline context
+func (context *Context) Transaction() context.Context {
+	return context.apmContext
+}
+
+// Logger returns the logger used for linking traces with apm transactions in this pipeline context
+func (context *Context) Logger() log.LoggerInterface {
+	if context.apmLogger != nil {
+		return context.apmLogger
+	}
+
+	return log.Current
 }
 
 // End break all pipelines, but the end phrase not included
