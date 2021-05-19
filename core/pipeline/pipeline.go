@@ -126,7 +126,7 @@ func (pipe *Pipeline) Run() *Context {
 	pipe.context.apmContext = apmTransactionContext
 	pipe.context.apmLogger = logger.NewLogger()
 	pipe.context.apmLogger.SetContext(apmTransactionContext)
-	log := pipe.context.apmLogger
+	log := pipe.context.Logger()
 
 	stats.Increment(pipe.name+".pipeline", "total")
 
@@ -218,7 +218,7 @@ func (pipe *Pipeline) Run() *Context {
 }
 
 func (pipe *Pipeline) startPipeline() {
-	log := pipe.context.apmLogger
+	log := pipe.context.Logger()
 
 	log.Trace("start pipeline: ", pipe.name)
 	if pipe.onStartJoint != nil {
@@ -229,7 +229,7 @@ func (pipe *Pipeline) startPipeline() {
 }
 
 func (pipe *Pipeline) endPipeline() {
-	log := pipe.context.apmLogger
+	log := pipe.context.Logger()
 
 	if pipe.context.IsExit() {
 		log.Debug("exit pipeline, ", pipe.name, ", ", pipe.context.Payload)
@@ -245,7 +245,7 @@ func (pipe *Pipeline) endPipeline() {
 }
 
 func (pipe *Pipeline) handlePipelineError() {
-	log := pipe.context.apmLogger
+	log := pipe.context.Logger()
 
 	if pipe.onErrorJoint != nil {
 		log.Trace("start handle pipeline error, ", pipe.name)
