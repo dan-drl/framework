@@ -17,15 +17,18 @@ limitations under the License.
 package logger
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
 
+	"github.com/cihub/seelog"
 	log "github.com/cihub/seelog"
 	"github.com/dan-drl/framework/core/config"
 	"github.com/dan-drl/framework/core/env"
 	"github.com/dan-drl/framework/core/util"
 	"github.com/ryanuber/go-glob"
+	"go.elastic.co/apm"
 )
 
 var file string
@@ -33,9 +36,71 @@ var loggingConfig *config.LoggingConfig
 var l sync.Mutex
 var e *env.Env
 
+func init() {
+	err := log.RegisterCustomFormatter("APM", createAPMFormatter)
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+}
+
+func createAPMFormatter(params string) log.FormatterFunc {
+	return func(message string, level log.LogLevel, logContext log.LogContextInterface) interface{} {
+		if logContext.CustomContext() != nil {
+			context := logContext.CustomContext().(context.Context)
+			if context != nil {
+				return fmt.Sprintf("[%+v]", apm.TraceFormatter(context))
+			}
+		}
+
+		return ""
+	}
+}
+
+// NewLogger create a new seelog logger based on current config
+func NewLogger() seelog.LoggerInterface {
+	consoleWriter, _ := NewConsoleWriter()
+
+	format := "[%Date(01-02) %Time] [%LEV] [%File:%Line] %APM %Msg%n"
+	formatter, err := log.NewFormatter(format)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	l, _ := log.LogLevelFromString(strings.ToLower(loggingConfig.LogLevel))
+	pushl, _ := log.LogLevelFromString(strings.ToLower(loggingConfig.PushLogLevel))
+
+	//logging receivers
+	receivers := []interface{}{consoleWriter}
+
+	root, err := log.NewSplitDispatcher(formatter, receivers)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	golbalConstraints, err := log.NewMinMaxConstraints(l, log.CriticalLvl)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	exceptions := []*log.LogLevelException{}
+
+	if loggingConfig.RealtimePushEnabled {
+		logger, err := log.LoggerFromCustomReceiver(&CustomReceiver{config: loggingConfig, minLogLevel: l, pushminLogLevel: pushl})
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			return logger
+		}
+	} else {
+		logger := log.NewAsyncLoopLogger(log.NewLoggerConfig(golbalConstraints, exceptions, root))
+		return logger
+	}
+
+	return nil
+}
+
 // SetLogging init set logging
 func SetLogging(env *env.Env, logLevel string, logFile string) {
-
 	e = env
 
 	l.Lock()
@@ -115,7 +180,6 @@ func SetLogging(env *env.Env, logLevel string, logFile string) {
 	exceptions := []*log.LogLevelException{}
 
 	if loggingConfig.RealtimePushEnabled {
-
 		logger, err := log.LoggerFromCustomReceiver(&CustomReceiver{config: loggingConfig, minLogLevel: l, pushminLogLevel: pushl})
 		err = log.ReplaceLogger(logger)
 		if err != nil {
@@ -128,7 +192,6 @@ func SetLogging(env *env.Env, logLevel string, logFile string) {
 			fmt.Println(err)
 		}
 	}
-
 }
 
 // GetLoggingConfig return logging configs

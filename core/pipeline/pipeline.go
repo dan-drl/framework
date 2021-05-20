@@ -17,13 +17,19 @@ limitations under the License.
 package pipeline
 
 import (
-	log "github.com/cihub/seelog"
-	"github.com/dan-drl/framework/core/global"
-	"github.com/dan-drl/framework/core/stats"
-	"github.com/dan-drl/framework/core/util"
+	"context"
+	"errors"
 	"runtime"
 	"strings"
 	"time"
+
+	log "github.com/cihub/seelog"
+	"github.com/dan-drl/framework/core/global"
+	"github.com/dan-drl/framework/core/logger"
+	"github.com/dan-drl/framework/core/stats"
+	"github.com/dan-drl/framework/core/util"
+
+	"go.elastic.co/apm"
 )
 
 type Pipeline struct {
@@ -34,8 +40,14 @@ type Pipeline struct {
 	context      *Context
 	onEndJoint   Joint
 	onErrorJoint Joint
-
 	currentJointName string
+}
+
+type APMContextKey struct {
+	id string
+}
+type APMContextValue struct {
+	name string
 }
 
 func NewPipeline(name string) *Pipeline {
@@ -103,6 +115,18 @@ func (pipe *Pipeline) Resume() *Context {
 }
 
 func (pipe *Pipeline) Run() *Context {
+	apmContextKey := APMContextKey {
+		id: pipe.id,
+	}
+	apmContextValue := APMContextValue {
+		name: pipe.name,
+	}
+	apmTransaction := apm.DefaultTracer.StartTransaction(apmContextValue.name, "pipeline")
+	apmTransactionContext := apm.ContextWithTransaction(context.WithValue(context.Background(), apmContextKey, apmContextValue), apmTransaction)
+	pipe.context.apmContext = apmTransactionContext
+	pipe.context.apmLogger = logger.NewLogger()
+	pipe.context.apmLogger.SetContext(apmTransactionContext)
+	log := pipe.context.Logger()
 
 	stats.Increment(pipe.name+".pipeline", "total")
 
@@ -127,6 +151,7 @@ func (pipe *Pipeline) Run() *Context {
 				//pipe.context.Set(CONTEXT_TASK_Message, util.ToJson(v, false))
 
 				log.Error("error in pipeline, ", pipe.name, ", ", pipe.id, ", ", pipe.currentJointName, ", ", v)
+				apm.CaptureError(pipe.context.apmContext, errors.New(v)).Send()
 				stats.Increment(pipe.name+".pipeline", "error")
 			}
 		}
@@ -136,6 +161,8 @@ func (pipe *Pipeline) Run() *Context {
 		}
 
 		stats.Increment(pipe.name+".pipeline", "finished")
+		
+		apmTransaction.End()
 	}()
 
 	var err error
@@ -143,10 +170,16 @@ func (pipe *Pipeline) Run() *Context {
 	pipe.startPipeline()
 
 	for _, v := range pipe.joints {
+		apmSpan, _ := apm.StartSpan(apmTransactionContext, v.Name(), "joint")
+		apmSpanContext := apm.ContextWithSpan(apmTransactionContext, apmSpan)
+		pipe.context.apmLogger.SetContext(apmSpanContext)
+		pipe.context.apmContext = apmSpanContext
+
 		log.Trace("pipe, ", pipe.name, ", start joint,", v.Name())
 		if pipe.context.IsEnd() {
 			log.Trace("break joint,", v.Name())
 			stats.Increment(pipe.name+".pipeline", "break")
+			apmSpan.End()
 			return pipe.context
 		}
 
@@ -158,6 +191,7 @@ func (pipe *Pipeline) Run() *Context {
 			}
 			log.Trace("exit joint,", v.Name())
 			stats.Increment(pipe.name+".pipeline", "exit")
+			apmSpan.End()
 			return pipe.context
 		}
 
@@ -172,15 +206,19 @@ func (pipe *Pipeline) Run() *Context {
 			log.Debugf("%s-%s: %v", pipe.name, v.Name(), err)
 			pipe.context.Payload = err.Error()
 			pipe.handlePipelineError()
+			apm.CaptureError(apmSpanContext, err).Send()
+			apmSpan.End()
 			return pipe.context
 		}
 		log.Trace(pipe.name, ", end joint,", v.Name())
+		apmSpan.End()
 	}
 
 	return pipe.context
 }
 
 func (pipe *Pipeline) startPipeline() {
+	log := pipe.context.Logger()
 
 	log.Trace("start pipeline: ", pipe.name)
 	if pipe.onStartJoint != nil {
@@ -191,6 +229,8 @@ func (pipe *Pipeline) startPipeline() {
 }
 
 func (pipe *Pipeline) endPipeline() {
+	log := pipe.context.Logger()
+
 	if pipe.context.IsExit() {
 		log.Debug("exit pipeline, ", pipe.name, ", ", pipe.context.Payload)
 		return
@@ -205,6 +245,7 @@ func (pipe *Pipeline) endPipeline() {
 }
 
 func (pipe *Pipeline) handlePipelineError() {
+	log := pipe.context.Logger()
 
 	if pipe.onErrorJoint != nil {
 		log.Trace("start handle pipeline error, ", pipe.name)
