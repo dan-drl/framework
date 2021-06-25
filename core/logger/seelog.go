@@ -70,10 +70,9 @@ func NewLogger() seelog.LoggerInterface {
 	pushl, _ := log.LogLevelFromString(strings.ToLower(loggingConfig.PushLogLevel))
 
 	rollingFileWriter, _ := NewRollingFileWriterSize(file, rollingArchiveNone, "", 250000000, 5, rollingNameModePostfix)
-	bufferedWriter, _ := NewBufferedWriter(rollingFileWriter, 10000, 1000)
 
 	//logging receivers
-	receivers := []interface{}{consoleWriter, bufferedWriter}
+	receivers := []interface{}{consoleWriter, rollingFileWriter}
 
 	root, err := log.NewSplitDispatcher(formatter, receivers)
 	if err != nil {

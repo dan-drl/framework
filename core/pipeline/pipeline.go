@@ -128,6 +128,11 @@ func (pipe *Pipeline) Run() *Context {
 	pipe.context.apmLogger.SetContext(apmTransactionContext)
 	log := pipe.context.Logger()
 
+	defer func() {
+		pipe.context.apmLogger.Flush()
+		pipe.context.apmLogger.Close()
+	}()
+
 	stats.Increment(pipe.name+".pipeline", "total")
 
 	//final phrase
